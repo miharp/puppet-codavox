@@ -1,0 +1,4 @@
+---
+# Installing straight from a release URL needs the low-level provider: the
+# packaging provider that resolves dependencies cannot take a bare file.
+codavox::package_provider: rpm

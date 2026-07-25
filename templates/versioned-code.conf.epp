@@ -1,0 +1,16 @@
+<%- | Stdlib::Absolutepath $code_id_command,
+      Stdlib::Absolutepath $code_content_command,
+| -%>
+# Managed by Puppet (codavox::server). Local edits are overwritten.
+#
+# OpenVox Server runs code-id-command on every static catalog compile, as a
+# fresh process with no caching, so it is a single readlink. code-content-command
+# serves file bytes as of a specific deployed version, and fails rather than
+# falling back to the current one.
+#
+# Both settings must be present or neither: validate-config! throws at startup
+# if exactly one is set.
+versioned-code: {
+    code-id-command: <%= $code_id_command %>
+    code-content-command: <%= $code_content_command %>
+}

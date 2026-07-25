@@ -1,0 +1,11 @@
+---
+# Paths codavox itself compiles in as defaults. Keeping them here rather than
+# inline in init.pp means the module states them once, and an operator who
+# overrides one is overriding the same key the documentation names.
+codavox::config_file: /etc/codavox/config.yaml
+codavox::environmentpath: /opt/puppetlabs/codavox/environments
+
+# The published packages are the only distribution codavox has, so there is no
+# repository to enable and no version to resolve from one by default.
+codavox::package_name: codavox
+codavox::package_ensure: installed

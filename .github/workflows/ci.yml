@@ -1,0 +1,28 @@
+---
+name: CI
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request: {}
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  puppet:
+    name: Puppet
+    # The shared Vox Pupuli workflow: validate, lint, and rspec-puppet across the
+    # Puppet and OS matrix metadata.json declares, so the tested matrix and the
+    # advertised one cannot drift apart.
+    #
+    # basic.yml rather than beaker.yml: this module has no acceptance tests. The
+    # end-to-end behaviour it configures is covered by codavox's own integration
+    # harness, against a real puppetserver.
+    uses: voxpupuli/gha-puppet/.github/workflows/basic.yml@v4

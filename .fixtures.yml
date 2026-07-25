@@ -1,0 +1,13 @@
+---
+# No symlink for the module under test: rspec-puppet creates
+# spec/fixtures/modules/codavox itself, taking the name from metadata.json.
+# Declaring it here as well produced a broken link that rspec-puppet then
+# refused to replace.
+fixtures:
+  forge_modules:
+    stdlib:
+      repo: puppetlabs/stdlib
+      ref: 9.7.0
+    inifile:
+      repo: puppetlabs/inifile
+      ref: 6.4.1

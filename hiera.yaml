@@ -1,0 +1,15 @@
+---
+# Module data, so OS-specific defaults live in exactly one place rather than
+# behind selectors in the manifests.
+version: 5
+
+defaults:
+  datadir: data
+  data_hash: yaml_data
+
+hierarchy:
+  - name: 'OS family'
+    paths:
+      - "family/%{facts.os.family}.yaml"
+  - name: 'Common'
+    path: common.yaml
