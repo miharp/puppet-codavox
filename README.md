@@ -76,6 +76,18 @@ in your estate clears that bar. Puppet manifests routinely name internal hosts
 and credential paths, so the `pp_role` extension is what actually limits who can
 fetch the estate's code.
 
+If your compilers were enrolled before codavox existed they carry no `pp_role`,
+and adding one means re-issuing every certificate. Name them instead, and drop
+each from the list as its certificate is re-issued with a role:
+
+```yaml
+codavox::publish_allow_certnames:
+  - 'compiler01.example.com'
+  - 'compiler02.example.com'
+```
+
+Either check admits, so the estate can move a node at a time. Matching is exact.
+
 Add the deploy API and webhook on the same node if you want deploys triggered by
 CI or a control-repo push:
 
