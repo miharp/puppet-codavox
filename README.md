@@ -197,9 +197,23 @@ docker run --rm -v "$PWD":/repo ghcr.io/voxpupuli/voxbox:8 lint
 docker run --rm -v "$PWD":/repo ghcr.io/voxpupuli/voxbox:8 spec
 ```
 
-Or with a local Ruby and `bundle install`:
+The container is quicker, but it is not the toolchain CI uses: it carries its own
+gems, currently a major behind this module's `Gemfile`. That mostly does not
+matter — but the two strings versions disagree about whether a parameter
+defaulted from module data has a documented default, so `REFERENCE.md` can pass
+in the container and be rejected in CI.
+
+For anything that touches class documentation, use the Gemfile:
 
 ```console
-bundle exec rake validate lint check
+bundle exec rake validate lint check          # exactly what CI runs
 bundle exec rake parallel_spec
+bundle exec rake strings:generate:reference   # after changing any class doc
+```
+
+Without a local Ruby 3.2, the same thing in a container:
+
+```console
+docker run --rm -v "$PWD":/repo -w /repo ruby:3.2 sh -c \
+  'bundle install --quiet && bundle exec rake validate lint check'
 ```

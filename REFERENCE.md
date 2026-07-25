@@ -95,17 +95,23 @@ Data type: `String[1]`
 
 The package to install.
 
+Default value: `'codavox'`
+
 ##### <a name="-codavox--package_ensure"></a>`package_ensure`
 
 Data type: `String[1]`
 
 A version to pin, or `installed`, `latest`, or `absent`.
 
+Default value: `'installed'`
+
 ##### <a name="-codavox--config_file"></a>`config_file`
 
 Data type: `Stdlib::Absolutepath`
 
 Path to the configuration file the daemons read.
+
+Default value: `'/etc/codavox/config.yaml'`
 
 ##### <a name="-codavox--environmentpath"></a>`environmentpath`
 
@@ -115,6 +121,8 @@ The directory codavox owns and fills with environment symlinks, and which
 OpenVox Server is pointed at. Deliberately not the stock `code/environments`:
 a fresh OpenVox Server ships a populated directory there, and `rename(2)`
 cannot replace a real directory with a symlink.
+
+Default value: `'/opt/puppetlabs/codavox/environments'`
 
 ##### <a name="-codavox--package_source"></a>`package_source`
 

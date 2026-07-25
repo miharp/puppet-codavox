@@ -1,29 +1,28 @@
 # frozen_string_literal: true
 
-source 'https://rubygems.org'
+source ENV['GEM_SOURCE'] || 'https://rubygems.org'
 
-# The development group is intended for developer tooling. CI will never install this.
-group :development do
-end
-
-# The test group is used for static validations and unit tests in gha-puppet's
-# basic and beaker gha-puppet workflows.
 group :test do
-  # Require the latest Puppet by default unless a specific version was requested
-  gem 'puppet', ENV.fetch('PUPPET_GEM_VERSION', '>= 0'), require: false
-
-  # Needed to build the test matrix based on metadata
-  gem 'puppet_metadata', '~> 6.0', require: false
-  # metagem that pulls in all further requirements
+  # metagem pulling in puppet-lint, rspec-puppet, rubocop and the rest
   gem 'voxpupuli-test', '~> 14.0', require: false
+  # builds the test matrix from metadata.json
+  gem 'puppet_metadata', '~> 6.1', require: false
 end
 
-# The system_tests group is used in gha-puppet's beaker workflow.
+# Used by gha-puppet's beaker workflow, which this module does not run yet.
 group :system_tests do
-  gem 'voxpupuli-acceptance', '~> 4.3', require: false
+  gem 'voxpupuli-acceptance', '~> 4.4', require: false
 end
 
-# The release group is used in gha-puppet's release workflow
 group :release do
-  gem 'voxpupuli-release', '~> 5.1'
+  gem 'voxpupuli-release', '~> 5.3', require: false
 end
+
+gem 'rake', require: false
+
+# openvox, not puppet. The two ship different strings implementations —
+# openvox-strings and puppet-strings — and they disagree about whether a
+# parameter whose default comes from module data has a documented default.
+# Declaring puppet here made CI reject a REFERENCE.md that the voxbox container
+# had just generated and validated as current.
+gem 'openvox', ENV.fetch('OPENVOX_GEM_VERSION', ['>= 7', '< 9']), require: false, groups: [:test]
