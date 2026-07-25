@@ -85,6 +85,18 @@
 #   publisher, so its role has to appear here too — ovadm gives a primary
 #   `openvox_server` and a compiler `openvox_compiler`.
 #
+# @param publish_allow_certnames
+#   Individual compilers permitted to fetch code, matched exactly against the
+#   certificate common name.
+#
+#   This is for an estate that already has compilers. `pp_role` is fixed when a
+#   certificate is issued, so a node enrolled before codavox existed cannot be
+#   given one without re-issuing its certificate — revoke, clean, re-enrol,
+#   restart — for every compiler. Naming them admits them today, and each can be
+#   dropped from the list as its certificate is re-issued with a role.
+#
+#   Either check admits. Setting only this one means no role admits anyone.
+#
 # @param publish_certificate_revocation
 #   Whether the publisher refuses revoked certificates, read from
 #   `<ssldir>/crl.pem`. Takes Puppet's own values: `chain`, `leaf`, or `false`.
@@ -154,6 +166,7 @@ class codavox (
   Optional[Stdlib::Absolutepath] $r10k_config = undef,
   Optional[String[1]] $publish_listen = undef,
   Optional[Array[String[1], 1]] $publish_allow_roles = undef,
+  Optional[Array[Stdlib::Host, 1]] $publish_allow_certnames = undef,
   Optional[Enum['chain', 'leaf', 'false']] $publish_certificate_revocation = undef,
   Optional[Stdlib::HTTPUrl] $agent_publisher = undef,
   Optional[String[1]] $agent_interval = undef,

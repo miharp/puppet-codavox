@@ -125,6 +125,7 @@ describe 'codavox' do
             r10k_config: '/etc/puppetlabs/r10k/r10k.yaml',
             publish_listen: ':8150',
             publish_allow_roles: %w[openvox_compiler openvox_server],
+            publish_allow_certnames: %w[legacy01.example.com legacy02.example.com],
             publish_certificate_revocation: 'chain',
             agent_publisher: 'https://puppet.example.com:8150',
             agent_interval: '30s',
@@ -152,6 +153,7 @@ describe 'codavox' do
             'publish' => {
               'listen' => ':8150',
               'allow_roles' => %w[openvox_compiler openvox_server],
+              'allow_certnames' => %w[legacy01.example.com legacy02.example.com],
               'certificate_revocation' => 'chain',
             },
             'agent' => {
@@ -174,6 +176,23 @@ describe 'codavox' do
         # truthiness rather than on undef would silently drop it.
         it 'keeps a setting whose value is false' do
           expect(written_config(catalogue)['agent']['prune_environments']).to be(false)
+        end
+      end
+
+      # An estate whose certificates predate codavox has no pp_role anywhere, so
+      # naming compilers has to work with no roles configured at all.
+      context 'with certnames and no roles' do
+        let(:params) do
+          {
+            publish_allow_certnames: ['legacy01.example.com'],
+          }
+        end
+
+        it { is_expected.to compile.with_all_deps }
+
+        it 'writes the certname allowlist and no role key' do
+          publish = written_config(catalogue)['publish']
+          expect(publish).to eq('allow_certnames' => ['legacy01.example.com'])
         end
       end
 

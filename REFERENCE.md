@@ -76,6 +76,7 @@ The following parameters are available in the `codavox` class:
 * [`r10k_config`](#-codavox--r10k_config)
 * [`publish_listen`](#-codavox--publish_listen)
 * [`publish_allow_roles`](#-codavox--publish_allow_roles)
+* [`publish_allow_certnames`](#-codavox--publish_allow_certnames)
 * [`publish_certificate_revocation`](#-codavox--publish_certificate_revocation)
 * [`agent_publisher`](#-codavox--agent_publisher)
 * [`agent_interval`](#-codavox--agent_interval)
@@ -233,6 +234,23 @@ in the estate clears that bar, so the role is what actually authorizes.
 A primary that serves its own catalogs is also a client of its own
 publisher, so its role has to appear here too — ovadm gives a primary
 `openvox_server` and a compiler `openvox_compiler`.
+
+Default value: `undef`
+
+##### <a name="-codavox--publish_allow_certnames"></a>`publish_allow_certnames`
+
+Data type: `Optional[Array[Stdlib::Host, 1]]`
+
+Individual compilers permitted to fetch code, matched exactly against the
+certificate common name.
+
+This is for an estate that already has compilers. `pp_role` is fixed when a
+certificate is issued, so a node enrolled before codavox existed cannot be
+given one without re-issuing its certificate — revoke, clean, re-enrol,
+restart — for every compiler. Naming them admits them today, and each can be
+dropped from the list as its certificate is re-issued with a role.
+
+Either check admits. Setting only this one means no role admits anyone.
 
 Default value: `undef`
 

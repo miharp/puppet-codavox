@@ -27,6 +27,7 @@ class codavox::config {
     $publish = {
       'listen'                 => $codavox::publish_listen,
       'allow_roles'            => $codavox::publish_allow_roles,
+      'allow_certnames'        => $codavox::publish_allow_certnames,
       'certificate_revocation' => $codavox::publish_certificate_revocation,
     }
 
