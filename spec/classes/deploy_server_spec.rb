@@ -61,12 +61,12 @@ describe 'codavox::deploy_server' do
         # 0600, and never diffed into a report: these are the credentials that
         # authorize a deploy.
         it {
-          is_expected.to contain_file('/etc/codavox/api.token').
-            with_ensure('file').
-            with_owner('root').
-            with_group('root').
-            with_mode('0600').
-            with_show_diff(false)
+          is_expected.to contain_file('/etc/codavox/api.token')
+            .with_ensure('file')
+            .with_owner('root')
+            .with_group('root')
+            .with_mode('0600')
+            .with_show_diff(false)
         }
 
         it { is_expected.to contain_file('/etc/codavox/webhook.secret').with_mode('0600').with_show_diff(false) }

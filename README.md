@@ -191,29 +191,33 @@ published under.
 
 ## Development
 
-```console
-docker run --rm -v "$PWD":/repo ghcr.io/voxpupuli/voxbox:8 validate
-docker run --rm -v "$PWD":/repo ghcr.io/voxpupuli/voxbox:8 lint
-docker run --rm -v "$PWD":/repo ghcr.io/voxpupuli/voxbox:8 spec
-```
-
-The container is quicker, but it is not the toolchain CI uses: it carries its own
-gems, currently a major behind this module's `Gemfile`. That mostly does not
-matter — but the two strings versions disagree about whether a parameter
-defaulted from module data has a documented default, so `REFERENCE.md` can pass
-in the container and be rejected in CI.
-
-For anything that touches class documentation, use the Gemfile:
+Use the `Gemfile`. It is what CI resolves from, and the only toolchain whose
+verdict means anything:
 
 ```console
-bundle exec rake validate lint check          # exactly what CI runs
-bundle exec rake parallel_spec
+bundle exec rake validate lint check   # exactly what CI runs
+bundle exec rake rubocop
+bundle exec rake spec
 bundle exec rake strings:generate:reference   # after changing any class doc
 ```
 
-Without a local Ruby 3.2, the same thing in a container:
+Without a local Ruby 3.2 — the version CI uses — the same thing in a container:
 
 ```console
 docker run --rm -v "$PWD":/repo -w /repo ruby:3.2 sh -c \
-  'bundle install --quiet && bundle exec rake validate lint check'
+  'bundle install --quiet && bundle exec rake validate lint check spec'
 ```
+
+The [voxbox container](https://github.com/voxpupuli/container-voxbox) is quicker
+and tempting, but **do not trust it for this module**. It carries its own gems,
+currently a major behind this `Gemfile`, and the two disagree in ways that are
+worse than a missed warning:
+
+- Its rubocop wants trailing dots in multi-line chains; CI's wants leading dots.
+  Running `rubocop -A` in the container produces code CI then rejects.
+- Its strings implementation does not document defaults that come from module
+  data, so it validates a `REFERENCE.md` that CI considers outdated.
+
+Both cost a red CI run here before the `Gemfile` was corrected from `puppet` to
+`openvox`, which is what put the container and CI in different gem families to
+begin with.

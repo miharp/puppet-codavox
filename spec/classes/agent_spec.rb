@@ -23,9 +23,9 @@ describe 'codavox::agent' do
         it { is_expected.to contain_class('codavox') }
 
         it {
-          is_expected.to contain_service('codavox-agent').
-            with_ensure('running').
-            with_enable(true)
+          is_expected.to contain_service('codavox-agent')
+            .with_ensure('running')
+            .with_enable(true)
         }
 
         # A configuration change has to restart the daemon, or the node keeps
@@ -56,9 +56,9 @@ describe 'codavox::agent' do
         it { is_expected.to compile.with_all_deps }
 
         it {
-          is_expected.to contain_service('codavox-agent').
-            with_ensure('stopped').
-            with_enable(false)
+          is_expected.to contain_service('codavox-agent')
+            .with_ensure('stopped')
+            .with_enable(false)
         }
       end
     end

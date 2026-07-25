@@ -7,8 +7,8 @@ describe 'codavox::server' do
     context "on #{os}" do
       let(:facts) { os_facts }
 
-      versioned_code = '/etc/puppetlabs/puppetserver/conf.d/versioned-code.conf'
-      puppet_conf = '/etc/puppetlabs/puppet/puppet.conf'
+      let(:versioned_code) { '/etc/puppetlabs/puppetserver/conf.d/versioned-code.conf' }
+      let(:puppet_conf) { '/etc/puppetlabs/puppet/puppet.conf' }
 
       context 'with default parameters' do
         it { is_expected.to compile.with_all_deps }
@@ -22,21 +22,21 @@ describe 'codavox::server' do
         it { is_expected.to contain_file(versioned_code).with_content(%r{code-content-command: /usr/bin/codavox-code-content}) }
 
         it {
-          is_expected.to contain_ini_setting('codavox static_catalogs').
-            with_ensure('present').
-            with_path(puppet_conf).
-            with_section('server').
-            with_setting('static_catalogs').
-            with_value(true)
+          is_expected.to contain_ini_setting('codavox static_catalogs')
+            .with_ensure('present')
+            .with_path(puppet_conf)
+            .with_section('server')
+            .with_setting('static_catalogs')
+            .with_value(true)
         }
 
         # environmentpath goes in [main]: a compiler resolves environments
         # through the same setting its own agent side uses.
         it {
-          is_expected.to contain_ini_setting('codavox environmentpath').
-            with_ensure('present').
-            with_section('main').
-            with_value('/opt/puppetlabs/codavox/environments')
+          is_expected.to contain_ini_setting('codavox environmentpath')
+            .with_ensure('present')
+            .with_section('main')
+            .with_value('/opt/puppetlabs/codavox/environments')
         }
 
         # Any of these changing has to restart the server, or it keeps serving

@@ -22,9 +22,9 @@ describe 'codavox::publish' do
         it { is_expected.to compile.with_all_deps }
 
         it {
-          is_expected.to contain_service('codavox-publish').
-            with_ensure('running').
-            with_enable(true)
+          is_expected.to contain_service('codavox-publish')
+            .with_ensure('running')
+            .with_enable(true)
         }
 
         it { is_expected.to contain_class('codavox::config').that_notifies('Service[codavox-publish]') }

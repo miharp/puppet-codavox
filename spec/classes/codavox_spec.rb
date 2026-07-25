@@ -31,11 +31,11 @@ describe 'codavox' do
         it { is_expected.to contain_package('codavox').with_ensure('installed') }
 
         it {
-          is_expected.to contain_file('/etc/codavox/config.yaml').
-            with_ensure('file').
-            with_owner('root').
-            with_group('root').
-            with_mode('0640')
+          is_expected.to contain_file('/etc/codavox/config.yaml')
+            .with_ensure('file')
+            .with_owner('root')
+            .with_group('root')
+            .with_mode('0640')
         }
 
         # Unset settings are omitted entirely. codavox rejects unknown keys, and
@@ -43,7 +43,7 @@ describe 'codavox' do
         # fleet-wide failure to start.
         it 'writes only what was set' do
           expect(written_config(catalogue)).to eq(
-            'environmentpath' => '/opt/puppetlabs/codavox/environments'
+            'environmentpath' => '/opt/puppetlabs/codavox/environments',
           )
         end
 
@@ -52,15 +52,19 @@ describe 'codavox' do
         end
       end
 
-      # The provider comes from module data per OS family, because the
-      # dependency-resolving providers cannot install from a bare file.
+      # Stays a plain local because it selects which examples get defined below,
+      # and a let only resolves once an example is already running.
       debian = os_facts[:os]['family'] == 'Debian'
-      expected_provider = debian ? 'dpkg' : 'rpm'
 
       context 'with a package source, unversioned' do
+        # The provider comes from module data per OS family, because the
+        # dependency-resolving providers cannot install from a bare file. Read
+        # back out of facts rather than closed over, so nothing leaks in.
+        let(:expected_provider) { (facts[:os]['family'] == 'Debian') ? 'dpkg' : 'rpm' }
+        let(:package_extension) { (facts[:os]['family'] == 'Debian') ? 'deb' : 'rpm' }
         let(:params) do
           {
-            package_source: "https://example.com/codavox_0.2.1_linux_amd64.#{debian ? 'deb' : 'rpm'}",
+            package_source: "https://example.com/codavox_0.2.1_linux_amd64.#{package_extension}",
             package_ensure: 'installed',
           }
         end
@@ -68,10 +72,10 @@ describe 'codavox' do
         it { is_expected.to compile.with_all_deps }
 
         it {
-          is_expected.to contain_package('codavox').
-            with_ensure('installed').
-            with_source(%r{codavox_0\.2\.1_linux_amd64}).
-            with_provider(expected_provider)
+          is_expected.to contain_package('codavox')
+            .with_ensure('installed')
+            .with_source(%r{codavox_0\.2\.1_linux_amd64})
+            .with_provider(expected_provider)
         }
       end
 
@@ -162,7 +166,7 @@ describe 'codavox' do
               'api_token' => '/etc/codavox/api.token',
               'secret' => '/etc/codavox/webhook.secret',
               'history' => 100,
-            }
+            },
           )
         end
 
