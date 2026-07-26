@@ -9,7 +9,7 @@ describe 'codavox::deploy_server' do
 
       context 'with neither credential' do
         let(:pre_condition) do
-          "class { 'codavox': staging => '/etc/puppetlabs/code-staging' }"
+          "class { 'codavox': basedir => '/etc/puppetlabs/code/environments' }"
         end
 
         # Each credential enables its own route, so with neither the daemon has
@@ -17,19 +17,19 @@ describe 'codavox::deploy_server' do
         it { is_expected.to compile.and_raise_error(%r{deploy_server_api_token_file}) }
       end
 
-      context 'without staging' do
+      context 'without basedir' do
         let(:pre_condition) do
           "class { 'codavox': deploy_server_secret_file => '/etc/codavox/webhook.secret' }"
         end
 
-        it { is_expected.to compile.and_raise_error(%r{codavox::staging}) }
+        it { is_expected.to compile.and_raise_error(%r{codavox::basedir}) }
       end
 
       context 'with a secret file it does not manage' do
         let(:pre_condition) do
           <<~PUPPET
             class { 'codavox':
-              staging                   => '/etc/puppetlabs/code-staging',
+              basedir                   => '/etc/puppetlabs/code/environments',
               deploy_server_secret_file => '/etc/codavox/webhook.secret',
             }
           PUPPET
@@ -47,7 +47,7 @@ describe 'codavox::deploy_server' do
         let(:pre_condition) do
           <<~PUPPET
             class { 'codavox':
-              staging                      => '/etc/puppetlabs/code-staging',
+              basedir                      => '/etc/puppetlabs/code/environments',
               deploy_server_api_token_file => '/etc/codavox/api.token',
               deploy_server_secret_file    => '/etc/codavox/webhook.secret',
               deploy_server_api_token      => Sensitive('a-token'),

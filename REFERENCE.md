@@ -53,7 +53,7 @@ include codavox
 
 ```puppet
 codavox::package_source: 'https://github.com/miharp/codavox/releases/download/v0.2.1/codavox_0.2.1_linux_amd64.rpm'
-codavox::staging: '/etc/puppetlabs/code-staging'
+codavox::basedir: '/etc/puppetlabs/code/environments'
 ```
 
 #### Parameters
@@ -68,7 +68,7 @@ The following parameters are available in the `codavox` class:
 * [`package_provider`](#-codavox--package_provider)
 * [`package_manage`](#-codavox--package_manage)
 * [`config_manage`](#-codavox--config_manage)
-* [`staging`](#-codavox--staging)
+* [`basedir`](#-codavox--basedir)
 * [`state`](#-codavox--state)
 * [`ssldir`](#-codavox--ssldir)
 * [`certname`](#-codavox--certname)
@@ -163,7 +163,7 @@ overwrites what Puppet writes here.
 
 Default value: `true`
 
-##### <a name="-codavox--staging"></a>`staging`
+##### <a name="-codavox--basedir"></a>`basedir`
 
 Data type: `Optional[Stdlib::Absolutepath]`
 
@@ -498,7 +498,7 @@ Default value: `true`
 
 ### <a name="codavox--publish"></a>`codavox::publish`
 
-Include this on the node holding r10k's staging directory — normally the
+Include this on the node holding r10k's basedir directory — normally the
 primary. The publisher seals each staged environment into a content-addressed
 `code_id`, materializes an immutable artifact for it, and serves both to
 compilers over mutual TLS using the Puppet certificate the node already has.
@@ -509,13 +509,13 @@ polling compiler, and two compilers polling either side of an r10k run would
 otherwise see different ids for one deploy. `systemctl reload codavox-publish`
 sends that signal, which is what r10k's `postrun` hook should call.
 
-Requires `codavox::staging`. Set `codavox::publish_allow_roles` to the
+Requires `codavox::basedir`. Set `codavox::publish_allow_roles` to the
 `pp_role` values allowed to fetch code — including this node's own role if it
 also serves its own catalogs.
 
 #### Examples
 
-##### On a primary, with staging and the roles set in Hiera
+##### On a primary, with basedir and the roles set in Hiera
 
 ```puppet
 include codavox::publish
