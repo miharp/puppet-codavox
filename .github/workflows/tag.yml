@@ -1,0 +1,34 @@
+---
+# Verifies a tag against the version recorded in the tree. It publishes nothing:
+# this module is not on the Forge yet, and a control repo consumes it by tag.
+#
+# This exists because the mistake already happened. v0.2.0 was tagged while
+# metadata.json still said 0.1.0, so `r10k` and `.fixtures.yml` fetched the
+# renamed code under a version number claiming it was the previous release.
+# Nothing failed — which is exactly the problem, since dependency ranges and
+# `puppet module` both believe metadata.json over the tag.
+name: Tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  version:
+    name: metadata.json matches the tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          recorded=$(ruby -rjson -e 'puts JSON.parse(File.read("metadata.json"))["version"]')
+          echo "tag: $tag"
+          echo "metadata.json: $recorded"
+          if [ "$tag" != "$recorded" ]; then
+            echo "::error::metadata.json says $recorded but this tag is $tag." \
+                 "Bump metadata.json and re-tag."
+            exit 1
+          fi
