@@ -42,8 +42,8 @@ class codavox::deploy_server (
 ) {
   include codavox
 
-  if !$codavox::staging {
-    fail('codavox::deploy_server needs codavox::staging set to r10k\'s basedir')
+  if !$codavox::basedir {
+    fail('codavox::deploy_server needs codavox::basedir set to r10k\'s basedir')
   }
 
   if !$codavox::deploy_server_api_token_file and !$codavox::deploy_server_secret_file {

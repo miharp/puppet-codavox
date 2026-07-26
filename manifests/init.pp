@@ -51,7 +51,7 @@
 #   noreplace conffile with every setting commented out, so an upgrade never
 #   overwrites what Puppet writes here.
 #
-# @param staging
+# @param basedir
 #   r10k's basedir: the tree the publisher seals. Required by `codavox::publish`
 #   and `codavox::deploy_server`, and it must be the same directory r10k deploys
 #   into.
@@ -147,7 +147,7 @@
 #
 # @example A primary that publishes, driven from Hiera
 #   codavox::package_source: 'https://github.com/miharp/codavox/releases/download/v0.2.1/codavox_0.2.1_linux_amd64.rpm'
-#   codavox::staging: '/etc/puppetlabs/code-staging'
+#   codavox::basedir: '/etc/puppetlabs/code/environments'
 #
 class codavox (
   String[1] $package_name,
@@ -158,7 +158,7 @@ class codavox (
   Optional[String[1]] $package_provider = undef,
   Boolean $package_manage = true,
   Boolean $config_manage = true,
-  Optional[Stdlib::Absolutepath] $staging = undef,
+  Optional[Stdlib::Absolutepath] $basedir = undef,
   Optional[Stdlib::Absolutepath] $state = undef,
   Optional[Stdlib::Absolutepath] $ssldir = undef,
   Optional[Stdlib::Host] $certname = undef,

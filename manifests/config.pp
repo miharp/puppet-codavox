@@ -15,7 +15,7 @@ class codavox::config {
 
   if $codavox::config_manage {
     $shared = {
-      'staging'         => $codavox::staging,
+      'basedir'         => $codavox::basedir,
       'state'           => $codavox::state,
       'ssldir'          => $codavox::ssldir,
       'certname'        => $codavox::certname,

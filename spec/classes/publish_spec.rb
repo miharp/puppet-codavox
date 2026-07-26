@@ -7,16 +7,16 @@ describe 'codavox::publish' do
     context "on #{os}" do
       let(:facts) { os_facts }
 
-      context 'without staging' do
-        # A publisher with no staging directory would come up serving nothing,
+      context 'without basedir' do
+        # A publisher with no basedir directory would come up serving nothing,
         # and every compiler would poll an empty environment list and report
         # success. Refusing to compile is the louder failure.
-        it { is_expected.to compile.and_raise_error(%r{codavox::staging}) }
+        it { is_expected.to compile.and_raise_error(%r{codavox::basedir}) }
       end
 
-      context 'with staging' do
+      context 'with basedir' do
         let(:pre_condition) do
-          "class { 'codavox': staging => '/etc/puppetlabs/code-staging' }"
+          "class { 'codavox': basedir => '/etc/puppetlabs/code/environments' }"
         end
 
         it { is_expected.to compile.with_all_deps }
@@ -36,7 +36,7 @@ describe 'codavox::publish' do
         let(:pre_condition) do
           <<~PUPPET
             class { 'codavox':
-              staging             => '/etc/puppetlabs/code-staging',
+              basedir             => '/etc/puppetlabs/code/environments',
               agent_publisher     => 'https://puppet.example.com:8150',
               publish_allow_roles => ['openvox_server'],
             }

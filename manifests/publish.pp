@@ -1,6 +1,6 @@
 # @summary Runs the codavox publisher, which serves versioned code to compilers.
 #
-# Include this on the node holding r10k's staging directory — normally the
+# Include this on the node holding r10k's basedir directory — normally the
 # primary. The publisher seals each staged environment into a content-addressed
 # `code_id`, materializes an immutable artifact for it, and serves both to
 # compilers over mutual TLS using the Puppet certificate the node already has.
@@ -11,7 +11,7 @@
 # otherwise see different ids for one deploy. `systemctl reload codavox-publish`
 # sends that signal, which is what r10k's `postrun` hook should call.
 #
-# Requires `codavox::staging`. Set `codavox::publish_allow_roles` to the
+# Requires `codavox::basedir`. Set `codavox::publish_allow_roles` to the
 # `pp_role` values allowed to fetch code — including this node's own role if it
 # also serves its own catalogs.
 #
@@ -27,7 +27,7 @@
 # @param service_manage
 #   Whether to manage the service at all.
 #
-# @example On a primary, with staging and the roles set in Hiera
+# @example On a primary, with basedir and the roles set in Hiera
 #   include codavox::publish
 #
 class codavox::publish (
@@ -40,8 +40,8 @@ class codavox::publish (
 
   # Refusing to start is better than a publisher that comes up serving nothing:
   # compilers would poll an empty environment list and report success.
-  if !$codavox::staging {
-    fail('codavox::publish needs codavox::staging set to r10k\'s basedir, the directory the publisher seals')
+  if !$codavox::basedir {
+    fail('codavox::publish needs codavox::basedir set to r10k\'s basedir, the directory the publisher seals')
   }
 
   if $service_manage {

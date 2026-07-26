@@ -56,12 +56,12 @@ classes to make something happen.
 
 ### A primary that publishes
 
-The publisher seals r10k's staging directory into content-addressed versions and
+The publisher seals r10k's basedir directory into content-addressed versions and
 serves them to compilers over mutual TLS, reusing the Puppet certificate the node
 already holds.
 
 ```yaml
-codavox::staging: '/etc/puppetlabs/code-staging'
+codavox::basedir: '/etc/puppetlabs/code/environments'
 codavox::publish_allow_roles:
   - 'openvox_compiler'
 ```
@@ -118,7 +118,7 @@ by the authorization check it just enabled. ovadm gives a primary
 `pp_role: openvox_server`:
 
 ```yaml
-codavox::staging: '/etc/puppetlabs/code-staging'
+codavox::basedir: '/etc/puppetlabs/code/environments'
 codavox::agent_publisher: 'https://puppet.example.com:8150'
 codavox::publish_allow_roles:
   - 'openvox_server'      # this node, as a client of its own publisher

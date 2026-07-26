@@ -117,7 +117,7 @@ describe 'codavox' do
       context 'with every section populated' do
         let(:params) do
           {
-            staging: '/etc/puppetlabs/code-staging',
+            basedir: '/etc/puppetlabs/code/environments',
             state: '/opt/puppetlabs/codavox/state',
             ssldir: '/etc/puppetlabs/puppet/ssl',
             certname: 'puppet.example.com',
@@ -143,7 +143,7 @@ describe 'codavox' do
 
         it 'nests each role section under its own key' do
           expect(written_config(catalogue)).to eq(
-            'staging' => '/etc/puppetlabs/code-staging',
+            'basedir' => '/etc/puppetlabs/code/environments',
             'state' => '/opt/puppetlabs/codavox/state',
             'ssldir' => '/etc/puppetlabs/puppet/ssl',
             'certname' => 'puppet.example.com',
