@@ -52,7 +52,7 @@ include codavox
 ##### A primary that publishes, driven from Hiera
 
 ```puppet
-codavox::package_source: 'https://github.com/miharp/codavox/releases/download/v0.2.1/codavox_0.2.1_linux_amd64.rpm'
+codavox::package_source: 'https://github.com/miharp/codavox/releases/download/v0.6.1/codavox_0.6.1_linux_amd64.rpm'
 codavox::basedir: '/etc/puppetlabs/code/environments'
 ```
 
