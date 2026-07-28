@@ -1,6 +1,6 @@
 {
   "name": "miharp-codavox",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": "Michael Harp",
   "summary": "Distributes versioned Puppet code to OpenVox compilers via codavox",
   "license": "Apache-2.0",
