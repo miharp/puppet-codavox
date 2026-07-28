@@ -12,8 +12,8 @@ require 'yaml'
 # The fact exists so a manifest can tell whether the agent has converged before
 # pointing OpenVox Server at codavox. That ordering matters most on a node that
 # is its own compiler: repointing `environmentpath` at a directory the agent has
-# not filled yet stops catalog compilation, and on a single-node install the
-# agent that would repair it needs a catalog from the server it just broke.
+# not filled yet stops catalog compilation, and the agent that would repair it
+# needs a catalog from the server it just broke.
 #
 # An empty hash means "nothing converged yet": a true statement about a node
 # that has only just installed codavox, and a useful one to branch on.
@@ -22,7 +22,7 @@ Facter.add(:codavox_environments) do
 
   # The path is configurable, so read the node's own config rather than assuming
   # the default. A fact that looked in the wrong directory would report nothing
-  # converged and quietly stop a standalone node from ever wiring its server.
+  # converged and quietly stop a primary from ever wiring its own server.
   def self.environment_path
     default = '/opt/puppetlabs/codavox/environments'
     config = '/etc/codavox/config.yaml'

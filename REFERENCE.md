@@ -11,9 +11,9 @@
 * [`codavox`](#codavox): Installs codavox and manages its configuration file.
 * [`codavox::agent`](#codavox--agent): Runs the codavox agent, converging this compiler onto the publisher.
 * [`codavox::deploy_server`](#codavox--deploy_server): Runs the codavox deploy server: the deploy API and control-repo webhook.
+* [`codavox::primary`](#codavox--primary): Runs codavox on a primary that also compiles its own catalogs.
 * [`codavox::publish`](#codavox--publish): Runs the codavox publisher, which serves versioned code to compilers.
 * [`codavox::server`](#codavox--server): Points OpenVox Server at codavox, enabling correct static catalogs.
-* [`codavox::standalone`](#codavox--standalone): Runs all of codavox on one node: publisher, agent, and server wiring.
 
 #### Private Classes
 
@@ -498,6 +498,144 @@ Whether to manage the service at all.
 
 Default value: `true`
 
+### <a name="codavox--primary"></a>`codavox::primary`
+
+Publisher, agent, and server wiring on one node. Use it wherever the node that
+holds the code is also a node that compiles catalogs — a single OpenVox Server
+with no compilers, or a primary in a compiler estate that wants versioned
+catalogs for itself rather than only handing them to everyone else.
+
+There is no separate single-node topology. A primary set up this way works the
+same whether it has compilers or not, and adding one later is purely additive:
+the new compiler gets `codavox::agent` and `codavox::server` pointed at this
+node's publisher, and nothing here changes.
+
+For a single-server estate it is also the only correct route to static
+catalogs. `static_catalogs` already defaults to true, but does nothing without
+a `code_id_command`, and hand-written ones fail in ways that are hard to
+notice: a git SHA does not change when an uncommitted edit changes the served
+content, and a timestamp invents a version that describes nothing.
+
+The node seals its own basedir, serves it to itself over mutual TLS, and
+compiles from the unpacked version directory. That round trip is redundant on
+one machine, but it is the same code path every compiler uses, so a `code_id`
+in a catalog means exactly what it means everywhere else.
+
+## Why the server wiring waits
+
+`codavox::server` repoints `environmentpath` at a directory the agent fills.
+Pointing it there before the agent has converged stops catalog compilation.
+That is correct behavior, and survivable on a compiler, because the primary can
+still hand it a catalog that repairs it.
+
+It is not survivable on a node that compiles its own catalog: the agent that
+would apply the fix needs a catalog from the server it just broke, so the
+repair is an SSH session. That is true of a lone server and of a primary with
+compilers alike — a self-managing node cannot Puppet its way out of it. This
+class therefore leaves the server alone until the `codavox_environments` fact
+reports the environment converged. The first run
+installs codavox and starts the publisher and agent; a later run, once there is
+something to serve, points OpenVox Server at it. Nothing needs sequencing by
+hand, and the node cannot lock itself out.
+
+The wiring only ever moves forward. If the environment later disappears, this
+class stops managing the server settings rather than removing them — reverting
+would restart puppetserver to reach a state that cannot compile static catalogs
+either, since `codavox code-id` still has no symlink to read.
+
+* **Note** Two settings have no safe default and must be in Hiera:
+
+```yaml
+codavox::basedir: /etc/puppetlabs/code/environments
+codavox::agent_publisher: "https://%{trusted.certname}:8150"
+```
+
+The basedir is r10k's, the directory the publisher seals. Leaving it at the
+stock codedir means OpenVox Server keeps compiling from the staging tree
+until the wiring flips, so the cutover costs no downtime. The publisher must
+be named by certname, not localhost, because it presents this node's Puppet
+certificate and the name has to verify against it.
+
+This node does not need to appear in `codavox::publish_allow_roles`. The
+publisher always admits its own certname, because the node already holds the
+code in plaintext on local disk.
+
+#### Examples
+
+##### A primary that compiles its own catalogs
+
+```puppet
+include codavox::primary
+```
+
+##### Keep compiling from the stock codedir for now
+
+```puppet
+class { 'codavox::primary':
+  manage_server => false,
+}
+```
+
+##### Where a profile already declares the puppetserver service
+
+```puppet
+Set this in Hiera rather than here, so `codavox::server` keeps its own
+automatic parameter lookup:
+
+```yaml
+codavox::server::service_manage: false
+```
+```
+
+#### Parameters
+
+The following parameters are available in the `codavox::primary` class:
+
+* [`require_environment`](#-codavox--primary--require_environment)
+* [`manage_server`](#-codavox--primary--manage_server)
+* [`wait_for_convergence`](#-codavox--primary--wait_for_convergence)
+* [`port`](#-codavox--primary--port)
+
+##### <a name="-codavox--primary--require_environment"></a>`require_environment`
+
+Data type: `String[1]`
+
+The environment that must have converged before OpenVox Server is pointed at
+codavox. One is enough: `environmentpath` covers them all, and the node only
+has to be able to compile something before it is safe to point it there.
+
+Default value: `'production'`
+
+##### <a name="-codavox--primary--manage_server"></a>`manage_server`
+
+Data type: `Boolean`
+
+Whether to wire OpenVox Server at all. Set false to run the publisher and
+agent while catalog compilation stays on the stock codedir — the state a
+first run passes through, made permanent.
+
+Default value: `true`
+
+##### <a name="-codavox--primary--wait_for_convergence"></a>`wait_for_convergence`
+
+Data type: `Boolean`
+
+Whether to hold the wiring back until the agent has converged. Turning this
+off wires the server immediately, which on a self-compiling node risks a
+puppetserver that cannot compile the catalog needed to fix it. Reasonable
+only when restoring a node whose version directories are already in place.
+
+Default value: `true`
+
+##### <a name="-codavox--primary--port"></a>`port`
+
+Data type: `Stdlib::Port`
+
+The publisher's port. Used only to build the example URL in the error raised
+when `codavox::agent_publisher` is unset.
+
+Default value: `8150`
+
 ### <a name="codavox--publish"></a>`codavox::publish`
 
 Include this on the node holding r10k's basedir directory — normally the
@@ -707,118 +845,4 @@ whenever the service is declared — here or elsewhere — and is skipped
 silently when nothing manages it at all.
 
 Default value: `true`
-
-### <a name="codavox--standalone"></a>`codavox::standalone`
-
-For an estate with a single OpenVox Server, where the node holding the code is
-also the node compiling catalogs. That is the most common Puppet topology, and
-the one with no other correct route to static catalogs: `static_catalogs`
-already defaults to true, but it does nothing without a `code_id_command`, and
-hand-written ones fail in ways that are hard to notice. A git SHA does not
-change when an uncommitted edit changes the served content, and a timestamp
-invents a version that describes nothing.
-
-The node seals its own basedir, serves it to itself over mutual TLS, and
-compiles from the unpacked version directory. The round trip is redundant on
-one machine, but it is the same code path every compiler uses, so a `code_id`
-in a catalog means exactly what it means everywhere else — and adding a
-compiler later changes nothing about how this node works.
-
-## Why the server wiring waits
-
-`codavox::server` repoints `environmentpath` at a directory the agent fills.
-Pointing it there before the agent has converged stops catalog compilation.
-That is correct behavior, and survivable on a compiler, because the primary can
-still hand it a catalog that repairs it.
-
-On a single node it is not survivable that way: the agent that would apply the
-fix needs a catalog from the server it just broke, so the repair is an SSH
-session. This class therefore leaves the server alone until the
-`codavox_environments` fact reports the environment converged. The first run
-installs codavox and starts the publisher and agent; a later run, once there is
-something to serve, points OpenVox Server at it. Nothing needs sequencing by
-hand, and the node cannot lock itself out.
-
-The wiring only ever moves forward. If the environment later disappears, this
-class stops managing the server settings rather than removing them — reverting
-would restart puppetserver to reach a state that cannot compile static catalogs
-either, since `codavox code-id` still has no symlink to read.
-
-* **Note** Two settings have no safe default and must be in Hiera:
-
-```yaml
-codavox::basedir: /etc/puppetlabs/code/environments
-codavox::agent_publisher: "https://%{trusted.certname}:8150"
-```
-
-The basedir is r10k's, the directory the publisher seals. Leaving it at the
-stock codedir means OpenVox Server keeps compiling from the staging tree
-until the wiring flips, so the cutover costs no downtime. The publisher must
-be named by certname, not localhost, because it presents this node's Puppet
-certificate and the name has to verify against it.
-
-#### Examples
-
-##### A single-server estate, with the two settings above in Hiera
-
-```puppet
-include codavox::standalone
-```
-
-##### Keep compiling from the stock codedir for now
-
-```puppet
-class { 'codavox::standalone':
-  manage_server => false,
-}
-```
-
-#### Parameters
-
-The following parameters are available in the `codavox::standalone` class:
-
-* [`require_environment`](#-codavox--standalone--require_environment)
-* [`manage_server`](#-codavox--standalone--manage_server)
-* [`wait_for_convergence`](#-codavox--standalone--wait_for_convergence)
-* [`port`](#-codavox--standalone--port)
-
-##### <a name="-codavox--standalone--require_environment"></a>`require_environment`
-
-Data type: `String[1]`
-
-The environment that must have converged before OpenVox Server is pointed at
-codavox. One is enough: `environmentpath` covers them all, and an estate this
-size is not usually waiting on a second.
-
-Default value: `'production'`
-
-##### <a name="-codavox--standalone--manage_server"></a>`manage_server`
-
-Data type: `Boolean`
-
-Whether to wire OpenVox Server at all. Set false to run the publisher and
-agent while catalog compilation stays on the stock codedir — the state a
-first run passes through, made permanent.
-
-Default value: `true`
-
-##### <a name="-codavox--standalone--wait_for_convergence"></a>`wait_for_convergence`
-
-Data type: `Boolean`
-
-Whether to hold the wiring back until the agent has converged. Turning this
-off wires the server immediately, which on a single node risks a puppetserver
-that cannot compile the catalog needed to fix it. Reasonable only when
-restoring a node whose version directories are already in place.
-
-Default value: `true`
-
-##### <a name="-codavox--standalone--port"></a>`port`
-
-Data type: `Stdlib::Port`
-
-The publisher's port. Used only to build the example URL in the error raised
-when `codavox::agent_publisher` is unset.
-
-Default value: `8150`
 

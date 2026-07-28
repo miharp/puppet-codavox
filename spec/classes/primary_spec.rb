@@ -2,13 +2,13 @@
 
 require 'spec_helper'
 
-describe 'codavox::standalone' do
+describe 'codavox::primary' do
   on_supported_os.each do |os, os_facts|
     context "on #{os}" do
       let(:facts) { os_facts }
 
       # Both settings live on the main class, so they cannot be passed from
-      # standalone and have to be declared the way an operator would in Hiera.
+      # this class and have to be declared the way an operator would in Hiera.
       let(:configured) do
         <<~PP
           class { 'codavox':
@@ -24,7 +24,7 @@ describe 'codavox::standalone' do
         # Pinned, because the suggested URL is built from this node's own
         # certname and would otherwise be whatever the developer's machine is
         # called.
-        let(:node) { 'standalone.example.com' }
+        let(:node) { 'primary.example.com' }
         let(:pre_condition) do
           "class { 'codavox': basedir => '/etc/puppetlabs/code/environments' }"
         end
@@ -33,7 +33,7 @@ describe 'codavox::standalone' do
         # certname, because the obvious guess, localhost, cannot verify against
         # the certificate the publisher presents.
         it { is_expected.to compile.and_raise_error(%r{codavox::agent_publisher}) }
-        it { is_expected.to compile.and_raise_error(%r{https://standalone\.example\.com:8150}) }
+        it { is_expected.to compile.and_raise_error(%r{https://primary\.example\.com:8150}) }
       end
 
       context 'on a first run, before anything has converged' do
@@ -164,7 +164,7 @@ describe 'codavox::standalone' do
 
         # `contain` rather than a resource-like declaration, so codavox::server
         # keeps its own automatic parameter lookup and an operator can still
-        # tune it without standalone having to proxy every setting.
+        # tune it without this class having to proxy every setting.
         it { is_expected.to contain_class('codavox::server').with_code_id_command('/usr/bin/codavox-code-id') }
       end
     end
