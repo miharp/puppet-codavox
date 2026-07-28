@@ -81,9 +81,10 @@
 #   Puppet CA proves only that the peer is *some* enrolled node, and every agent
 #   in the estate clears that bar, so the role is what actually authorizes.
 #
-#   A primary that serves its own catalogs is also a client of its own
-#   publisher, so its role has to appear here too — ovadm gives a primary
-#   `openvox_server` and a compiler `openvox_compiler`.
+#   A node that serves its own catalogs is also a client of its own publisher,
+#   but does not need listing here: the publisher always admits its own certname,
+#   because that node already holds the code in plaintext on local disk. List
+#   what your compilers carry — ovadm gives a compiler `openvox_compiler`.
 #
 # @param publish_allow_certnames
 #   Individual compilers permitted to fetch code, matched exactly against the

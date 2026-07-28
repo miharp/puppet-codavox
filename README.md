@@ -63,7 +63,6 @@ the server wiring on that one node:
 codavox::basedir: '/etc/puppetlabs/code/environments'
 codavox::agent_publisher: "https://%{trusted.certname}:8150"
 codavox::publish_allow_roles:
-  - 'openvox_server'      # this node, as a client of its own publisher
   - 'openvox_compiler'    # any compilers added later
 ```
 
@@ -71,11 +70,15 @@ codavox::publish_allow_roles:
 include codavox::standalone
 ```
 
-A node that compiles its own catalogs is also a client of its own publisher, so
-**its own role has to appear in `publish_allow_roles`** or it will be refused by
-the authorization check it just enabled. ovadm gives a primary
-`pp_role: openvox_server`. The publisher must be named by certname rather than
-localhost, because it presents this node's Puppet certificate.
+This node is a client of its own publisher, but it does **not** need to appear in
+`publish_allow_roles`: the publisher always admits its own certname, since that
+node already holds the code in plaintext on local disk. The allowlist still has
+to name something — an empty one is refused at startup — so name the role your
+compilers will carry, even if there are none yet.
+
+The publisher must be named by certname rather than localhost, because it
+presents this node's Puppet certificate and localhost would not verify against
+it.
 
 The class wires OpenVox Server only once the `codavox_environments` fact reports
 the environment converged, so the first run installs and starts codavox while
