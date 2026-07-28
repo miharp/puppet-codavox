@@ -8,8 +8,8 @@ versioned Puppet code to OpenVox compilers.
 - [What codavox does, and why it needs a module](#what-codavox-does-and-why-it-needs-a-module)
 - [Setup](#setup)
 - [Usage](#usage)
-  - [A single OpenVox Server](#a-single-openvox-server)
-  - [A primary that publishes](#a-primary-that-publishes)
+  - [A primary](#a-primary)
+  - [A primary that only publishes](#a-primary-that-only-publishes)
   - [A compiler](#a-compiler)
   - [Replacing a hand-rolled static catalog setup](#replacing-a-hand-rolled-static-catalog-setup)
 - [Reference](#reference)
@@ -54,10 +54,12 @@ classes to make something happen.
 
 ## Usage
 
-### A single OpenVox Server
+### A primary
 
-Most estates have one. `codavox::standalone` runs the publisher, the agent, and
-the server wiring on that one node:
+`codavox::primary` runs the publisher, the agent, and the server wiring on one
+node. Use it wherever the node holding the code also compiles catalogs — a single
+OpenVox Server with no compilers, or a primary in a compiler estate that wants
+versioned catalogs for itself rather than only handing them to everyone else:
 
 ```yaml
 codavox::basedir: '/etc/puppetlabs/code/environments'
@@ -67,7 +69,7 @@ codavox::publish_allow_roles:
 ```
 
 ```puppet
-include codavox::standalone
+include codavox::primary
 ```
 
 This node is a client of its own publisher, but it does **not** need to appear in
@@ -86,10 +88,16 @@ catalogs keep compiling from the staging tree, and a later run does the cutover.
 Nothing needs sequencing by hand — see [Limitations](#limitations) for what that
 protects against.
 
-Adding compilers later changes nothing about this node: they get
-`codavox::agent` and `codavox::server`, pointed at the same publisher.
+**There is no separate single-node topology.** A primary set up this way works
+the same whether it has compilers or not, and adding one later is purely
+additive: the new compiler gets `codavox::agent` and `codavox::server` pointed at
+this node's publisher, and nothing here changes.
 
-### A primary that publishes
+### A primary that only publishes
+
+Where the primary hands code to compilers but compiles no catalogs of its own.
+`codavox::primary` above is usually the better choice, since a primary that
+manages itself is compiling at least one catalog.
 
 The publisher seals r10k's basedir directory into content-addressed versions and
 serves them to compilers over mutual TLS, reusing the Puppet certificate the node
@@ -176,11 +184,11 @@ making the change. `codavox::server` orders itself after `codavox::agent` when
 both are included, which narrows the window but does not close it: the agent
 converges asynchronously.
 
-`codavox::standalone` handles this for you. It reads the `codavox_environments`
+`codavox::primary` handles this for you. It reads the `codavox_environments`
 fact — the same environment symlinks `codavox code-id` reads — and leaves OpenVox
 Server alone until the environment has actually converged, so the cutover lands
 on a later run with nothing sequenced by hand. Prefer it on any node that
-compiles its own catalogs.
+compiles its own catalogs, with or without compilers.
 
 Composing the classes yourself on such a node still means two passes: apply with
 `manage_environmentpath => false`, confirm `codavox code-id production` answers,
