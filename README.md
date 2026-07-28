@@ -8,9 +8,9 @@ versioned Puppet code to OpenVox compilers.
 - [What codavox does, and why it needs a module](#what-codavox-does-and-why-it-needs-a-module)
 - [Setup](#setup)
 - [Usage](#usage)
+  - [A single OpenVox Server](#a-single-openvox-server)
   - [A primary that publishes](#a-primary-that-publishes)
   - [A compiler](#a-compiler)
-  - [A single primary that serves its own catalogs](#a-single-primary-that-serves-its-own-catalogs)
   - [Replacing a hand-rolled static catalog setup](#replacing-a-hand-rolled-static-catalog-setup)
 - [Reference](#reference)
 - [Limitations](#limitations)
@@ -53,6 +53,41 @@ the node's role, not a consequence of installing software. Add one or more role
 classes to make something happen.
 
 ## Usage
+
+### A single OpenVox Server
+
+Most estates have one. `codavox::standalone` runs the publisher, the agent, and
+the server wiring on that one node:
+
+```yaml
+codavox::basedir: '/etc/puppetlabs/code/environments'
+codavox::agent_publisher: "https://%{trusted.certname}:8150"
+codavox::publish_allow_roles:
+  - 'openvox_compiler'    # any compilers added later
+```
+
+```puppet
+include codavox::standalone
+```
+
+This node is a client of its own publisher, but it does **not** need to appear in
+`publish_allow_roles`: the publisher always admits its own certname, since that
+node already holds the code in plaintext on local disk. The allowlist still has
+to name something — an empty one is refused at startup — so name the role your
+compilers will carry, even if there are none yet.
+
+The publisher must be named by certname rather than localhost, because it
+presents this node's Puppet certificate and localhost would not verify against
+it.
+
+The class wires OpenVox Server only once the `codavox_environments` fact reports
+the environment converged, so the first run installs and starts codavox while
+catalogs keep compiling from the staging tree, and a later run does the cutover.
+Nothing needs sequencing by hand — see [Limitations](#limitations) for what that
+protects against.
+
+Adding compilers later changes nothing about this node: they get
+`codavox::agent` and `codavox::server`, pointed at the same publisher.
 
 ### A primary that publishes
 
@@ -110,29 +145,6 @@ include codavox::server
 swaps the environment symlink. `codavox::server` points OpenVox Server at what it
 deployed.
 
-### A single primary that serves its own catalogs
-
-A primary that compiles its own catalogs is also a client of its own publisher,
-so **its own role has to appear in `publish_allow_roles`** or it will be refused
-by the authorization check it just enabled. ovadm gives a primary
-`pp_role: openvox_server`:
-
-```yaml
-codavox::basedir: '/etc/puppetlabs/code/environments'
-codavox::agent_publisher: 'https://puppet.example.com:8150'
-codavox::publish_allow_roles:
-  - 'openvox_server'      # this node, as a client of its own publisher
-  - 'openvox_compiler'    # any real compilers
-```
-
-```puppet
-include codavox::publish
-include codavox::agent
-include codavox::server
-```
-
-Read [Limitations](#limitations) before doing this on a node that manages itself.
-
 ### Replacing a hand-rolled static catalog setup
 
 `codavox::server` is a drop-in replacement for a profile that deploys
@@ -164,10 +176,15 @@ making the change. `codavox::server` orders itself after `codavox::agent` when
 both are included, which narrows the window but does not close it: the agent
 converges asynchronously.
 
-On a node that compiles its own catalog, do it in two passes — apply with
+`codavox::standalone` handles this for you. It reads the `codavox_environments`
+fact — the same environment symlinks `codavox code-id` reads — and leaves OpenVox
+Server alone until the environment has actually converged, so the cutover lands
+on a later run with nothing sequenced by hand. Prefer it on any node that
+compiles its own catalogs.
+
+Composing the classes yourself on such a node still means two passes: apply with
 `manage_environmentpath => false`, confirm `codavox code-id production` answers,
-then remove the override. A future release should replace that advice with a fact
-so the module can tell for itself.
+then remove the override.
 
 **Version pinning with `package_source` is rpm-only.** The `dpkg` provider has no
 versionable feature, so on Debian and Ubuntu `package_ensure` must be `installed`,

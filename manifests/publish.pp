@@ -12,8 +12,9 @@
 # sends that signal, which is what r10k's `postrun` hook should call.
 #
 # Requires `codavox::basedir`. Set `codavox::publish_allow_roles` to the
-# `pp_role` values allowed to fetch code — including this node's own role if it
-# also serves its own catalogs.
+# `pp_role` values allowed to fetch code. This node's own role does not belong
+# there even when it serves its own catalogs: the publisher always admits its own
+# certname.
 #
 # @param service_name
 #   The systemd service the package ships.
