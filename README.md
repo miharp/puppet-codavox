@@ -44,7 +44,7 @@ codavox publishes rpm and deb packages to GitHub Releases and runs no package
 repository, so the usual case is to install from a release URL:
 
 ```yaml
-codavox::package_source: 'https://github.com/miharp/codavox/releases/download/v0.6.1/codavox_0.6.1_linux_amd64.rpm'
+codavox::package_source: 'https://github.com/miharp/codavox/releases/download/v0.6.2/codavox_0.6.2_linux_amd64.rpm'
 ```
 
 Including `codavox` on its own installs the package and writes
