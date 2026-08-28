@@ -11,6 +11,7 @@ versioned Puppet code to OpenVox compilers.
   - [A primary](#a-primary)
   - [A primary that only publishes](#a-primary-that-only-publishes)
   - [A compiler](#a-compiler)
+  - [The environment cache](#the-environment-cache)
   - [Replacing a hand-rolled static catalog setup](#replacing-a-hand-rolled-static-catalog-setup)
 - [Reference](#reference)
 - [Limitations](#limitations)
@@ -152,6 +153,39 @@ include codavox::server
 `codavox::agent` polls, fetches, verifies by resealing the unpacked tree, and
 swaps the environment symlink. `codavox::server` points OpenVox Server at what it
 deployed.
+
+### The environment cache
+
+A swap alone is not a deploy. OpenVox Server caches each environment for
+`environment_timeout` and never re-reads the symlink while the cache holds, so
+after a swap it would keep compiling the old tree while `codavox code-id`
+reports the new `code_id` — a catalog stamped with a version that does not
+describe it. So after every swap the agent asks the server on its own node to
+expire that environment, over
+`DELETE /puppet-admin-api/v1/environment-cache`, and the `auth.conf` OpenVox
+Server ships denies that path to everyone.
+
+`codavox::server` writes the rule that allows it, admitting this node by its
+own certname — the node's agent is the only caller. A refused flush is a
+failed sync, reported on every deploy until the rule exists, so keep
+`manage_cache_flush_rule` on unless you write the rule some other way.
+
+With the flush in place, holding the cache is safe, and a compiler that does
+not re-parse every environment on every catalog compiles faster:
+
+```yaml
+codavox::server::environment_timeout: unlimited
+```
+
+To share one rule across the fleet instead of one per node, admit the
+`pp_role` your compilers carry — by OID, because a compiler runs with its CA
+service disabled and the admin API then resolves no extension short names:
+
+```yaml
+codavox::server::cache_flush_allow:
+  extensions:
+    '1.3.6.1.4.1.34380.1.1.13': openvox_compiler
+```
 
 ### Replacing a hand-rolled static catalog setup
 

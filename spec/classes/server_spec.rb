@@ -11,6 +11,9 @@ describe 'codavox::server' do
       let(:puppet_conf) { '/etc/puppetlabs/puppet/puppet.conf' }
 
       context 'with default parameters' do
+        # Pinned: the default rule admits this node by its own certname.
+        let(:node) { 'compiler01.example.com' }
+
         it { is_expected.to compile.with_all_deps }
         it { is_expected.to contain_class('codavox') }
 
@@ -39,10 +42,69 @@ describe 'codavox::server' do
             .with_value('/opt/puppetlabs/codavox/environments')
         }
 
+        # The agent expires this server's environment cache after every swap,
+        # and the shipped auth.conf denies that path to everyone. Without the
+        # rule a server with environment_timeout set keeps compiling the old
+        # tree under the new code_id.
+        it {
+          is_expected.to contain_puppet_authorization__rule('codavox environment cache flush')
+            .with_ensure('present')
+            .with_path('/etc/puppetlabs/puppetserver/conf.d/auth.conf')
+            .with_match_request_path('/puppet-admin-api/v1/environment-cache')
+            .with_match_request_type('path')
+            .with_match_request_method('delete')
+            .with_sort_order(200)
+        }
+
+        # This node's own agent is the only caller, so admit exactly this node.
+        it { is_expected.to contain_puppet_authorization__rule('codavox environment cache flush').with_allow(['compiler01.example.com']) }
+
+        # environment_timeout is the operator's call; unmanaged unless asked.
+        it { is_expected.not_to contain_ini_setting('codavox environment_timeout') }
+
         # Any of these changing has to restart the server, or it keeps serving
-        # from the old wiring.
+        # from the old wiring. auth.conf is read at startup too.
         it { is_expected.to contain_file(versioned_code).that_notifies('Service[puppetserver]') }
         it { is_expected.to contain_ini_setting('codavox environmentpath').that_notifies('Service[puppetserver]') }
+        it { is_expected.to contain_puppet_authorization__rule('codavox environment cache flush').that_notifies('Service[puppetserver]') }
+      end
+
+      context 'with cache_flush_allow set to a shared pp_role rule' do
+        let(:params) do
+          { cache_flush_allow: { 'extensions' => { '1.3.6.1.4.1.34380.1.1.13' => 'openvox_compiler' } } }
+        end
+
+        # Passed through verbatim: the module does not second-guess auth.conf's
+        # own allow syntax.
+        it { is_expected.to compile.with_all_deps }
+
+        it {
+          is_expected.to contain_puppet_authorization__rule('codavox environment cache flush')
+            .with_allow({ 'extensions' => { '1.3.6.1.4.1.34380.1.1.13' => 'openvox_compiler' } })
+        }
+      end
+
+      context 'with manage_cache_flush_rule false' do
+        let(:params) { { manage_cache_flush_rule: false } }
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.not_to contain_puppet_authorization__rule('codavox environment cache flush') }
+      end
+
+      context 'with environment_timeout set' do
+        let(:params) { { environment_timeout: 'unlimited' } }
+
+        it { is_expected.to compile.with_all_deps }
+
+        it {
+          is_expected.to contain_ini_setting('codavox environment_timeout')
+            .with_ensure('present')
+            .with_path(puppet_conf)
+            .with_section('server')
+            .with_setting('environment_timeout')
+            .with_value('unlimited')
+            .that_notifies('Service[puppetserver]')
+        }
       end
 
       context 'with enabled false' do
@@ -55,6 +117,7 @@ describe 'codavox::server' do
         it { is_expected.to contain_file(versioned_code).with_ensure('absent') }
         it { is_expected.to contain_ini_setting('codavox static_catalogs').with_ensure('absent') }
         it { is_expected.to contain_ini_setting('codavox environmentpath').with_ensure('absent') }
+        it { is_expected.to contain_puppet_authorization__rule('codavox environment cache flush').with_ensure('absent') }
       end
 
       context 'with manage_environmentpath false' do

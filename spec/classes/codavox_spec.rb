@@ -132,6 +132,8 @@ describe 'codavox' do
             agent_keep: 3,
             agent_min_age: '2h',
             agent_prune_environments: false,
+            agent_puppetserver: 'https://puppet.example.com:8140',
+            agent_flush_environment_cache: true,
             deploy_server_listen: ':8170',
             deploy_server_api_token_file: '/etc/codavox/api.token',
             deploy_server_secret_file: '/etc/codavox/webhook.secret',
@@ -162,6 +164,8 @@ describe 'codavox' do
               'keep' => 3,
               'min_age' => '2h',
               'prune_environments' => false,
+              'puppetserver' => 'https://puppet.example.com:8140',
+              'flush_environment_cache' => true,
             },
             'deploy_server' => {
               'listen' => ':8170',

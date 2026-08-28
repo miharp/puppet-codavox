@@ -63,6 +63,7 @@ describe 'codavox::primary' do
       end
 
       context 'once production has converged' do
+        let(:node) { 'primary.example.com' }
         let(:pre_condition) { configured }
         let(:facts) do
           os_facts.merge(codavox_environments: { 'production' => 'a1b2c3d4' })
@@ -71,6 +72,14 @@ describe 'codavox::primary' do
         it { is_expected.to compile.with_all_deps }
         it { is_expected.to contain_class('codavox::server') }
         it { is_expected.to contain_file(versioned_code).with_ensure('file') }
+
+        # A primary's certificate carries no pp_role, so a role-based rule would
+        # deny its own agent. The default admits the node by certname, which
+        # works here without the class having to know it is on a primary.
+        it {
+          is_expected.to contain_puppet_authorization__rule('codavox environment cache flush')
+            .with_allow(['primary.example.com'])
+        }
 
         it {
           is_expected.to contain_ini_setting('codavox environmentpath')

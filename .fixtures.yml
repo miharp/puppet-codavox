@@ -11,3 +11,14 @@ fixtures:
     inifile:
       repo: puppetlabs/inifile
       ref: 6.4.1
+    # puppet_authorization edits auth.conf with the hocon gem, and pulls in
+    # concat and hocon of its own.
+    puppet_authorization:
+      repo: puppetlabs/puppet_authorization
+      ref: 1.0.1
+    concat:
+      repo: puppetlabs/concat
+      ref: 10.0.1
+    hocon:
+      repo: puppetlabs/hocon
+      ref: 2.0.0
