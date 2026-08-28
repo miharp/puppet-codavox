@@ -32,11 +32,13 @@ class codavox::config {
     }
 
     $agent = {
-      'publisher'          => $codavox::agent_publisher,
-      'interval'           => $codavox::agent_interval,
-      'keep'               => $codavox::agent_keep,
-      'min_age'            => $codavox::agent_min_age,
-      'prune_environments' => $codavox::agent_prune_environments,
+      'publisher'               => $codavox::agent_publisher,
+      'interval'                => $codavox::agent_interval,
+      'keep'                    => $codavox::agent_keep,
+      'min_age'                 => $codavox::agent_min_age,
+      'prune_environments'      => $codavox::agent_prune_environments,
+      'puppetserver'            => $codavox::agent_puppetserver,
+      'flush_environment_cache' => $codavox::agent_flush_environment_cache,
     }
 
     $deploy_server = {

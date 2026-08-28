@@ -123,6 +123,19 @@
 #   default because deletion is destructive; needs r10k's `purge_levels` set to
 #   match.
 #
+# @param agent_puppetserver
+#   The OpenVox Server on this node whose environment cache the agent expires
+#   after every swap. Left unset, codavox uses `https://<certname>:8140` — the
+#   certname rather than localhost, because the server presents its Puppet
+#   certificate and the name has to verify against it.
+#
+# @param agent_flush_environment_cache
+#   Whether the agent expires the environment in this node's OpenVox Server
+#   cache after every swap. Left unset, codavox defaults to true. Set false only
+#   on a server running with `environment_timeout = 0`, which re-reads the
+#   environment on every compile and has nothing to expire. `codavox::server`
+#   writes the `auth.conf` rule the flush needs.
+#
 # @param deploy_server_listen
 #   Address the deploy server listens on.
 #
@@ -174,6 +187,8 @@ class codavox (
   Optional[Integer[1]] $agent_keep = undef,
   Optional[String[1]] $agent_min_age = undef,
   Optional[Boolean] $agent_prune_environments = undef,
+  Optional[Stdlib::HTTPUrl] $agent_puppetserver = undef,
+  Optional[Boolean] $agent_flush_environment_cache = undef,
   Optional[String[1]] $deploy_server_listen = undef,
   Optional[Stdlib::Absolutepath] $deploy_server_api_token_file = undef,
   Optional[Stdlib::Absolutepath] $deploy_server_secret_file = undef,

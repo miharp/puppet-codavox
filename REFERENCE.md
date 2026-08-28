@@ -84,6 +84,8 @@ The following parameters are available in the `codavox` class:
 * [`agent_keep`](#-codavox--agent_keep)
 * [`agent_min_age`](#-codavox--agent_min_age)
 * [`agent_prune_environments`](#-codavox--agent_prune_environments)
+* [`agent_puppetserver`](#-codavox--agent_puppetserver)
+* [`agent_flush_environment_cache`](#-codavox--agent_flush_environment_cache)
 * [`deploy_server_listen`](#-codavox--deploy_server_listen)
 * [`deploy_server_api_token_file`](#-codavox--deploy_server_api_token_file)
 * [`deploy_server_secret_file`](#-codavox--deploy_server_secret_file)
@@ -308,6 +310,29 @@ Data type: `Optional[Boolean]`
 Whether to remove environments the publisher no longer serves. Off by
 default because deletion is destructive; needs r10k's `purge_levels` set to
 match.
+
+Default value: `undef`
+
+##### <a name="-codavox--agent_puppetserver"></a>`agent_puppetserver`
+
+Data type: `Optional[Stdlib::HTTPUrl]`
+
+The OpenVox Server on this node whose environment cache the agent expires
+after every swap. Left unset, codavox uses `https://<certname>:8140` — the
+certname rather than localhost, because the server presents its Puppet
+certificate and the name has to verify against it.
+
+Default value: `undef`
+
+##### <a name="-codavox--agent_flush_environment_cache"></a>`agent_flush_environment_cache`
+
+Data type: `Optional[Boolean]`
+
+Whether the agent expires the environment in this node's OpenVox Server
+cache after every swap. Left unset, codavox defaults to true. Set false only
+on a server running with `environment_timeout = 0`, which re-reads the
+environment on every compile and has nothing to expire. `codavox::server`
+writes the `auth.conf` rule the flush needs.
 
 Default value: `undef`
 
@@ -538,6 +563,13 @@ installs codavox and starts the publisher and agent; a later run, once there is
 something to serve, points OpenVox Server at it. Nothing needs sequencing by
 hand, and the node cannot lock itself out.
 
+One consequence to expect: until that later run, the agent's cache flush
+fails. It asks this node's OpenVox Server to expire each environment it
+swaps, and the `auth.conf` rule allowing that arrives with the server wiring,
+so the first run's journal shows `environment cache flush failed ... 403` and
+`sync failed` from the agent. That clears on its own once the wiring lands;
+the code itself is deployed and reported throughout.
+
 The wiring only ever moves forward. If the environment later disappears, this
 class stops managing the server settings rather than removing them — reverting
 would restart puppetserver to reach a state that cannot compile static catalogs
@@ -707,7 +739,8 @@ Default value: `true`
 
 Include this on each compiler, alongside `codavox::agent`. It writes
 `versioned-code.conf` naming codavox's two commands, turns static catalogs on,
-and points `environmentpath` at the directory codavox fills with symlinks.
+points `environmentpath` at the directory codavox fills with symlinks, and
+lets the agent expire this server's environment cache after every deploy.
 
 This is what replaces a hand-rolled pair of shell scripts. The difference is
 not tidiness. A script that answers `code_id` from a timestamp when it cannot
@@ -757,6 +790,10 @@ The following parameters are available in the `codavox::server` class:
 * [`code_content_command`](#-codavox--server--code_content_command)
 * [`manage_environmentpath`](#-codavox--server--manage_environmentpath)
 * [`manage_static_catalogs`](#-codavox--server--manage_static_catalogs)
+* [`manage_cache_flush_rule`](#-codavox--server--manage_cache_flush_rule)
+* [`cache_flush_allow`](#-codavox--server--cache_flush_allow)
+* [`auth_conf`](#-codavox--server--auth_conf)
+* [`environment_timeout`](#-codavox--server--environment_timeout)
 * [`puppet_config`](#-codavox--server--puppet_config)
 * [`puppetserver_confdir`](#-codavox--server--puppetserver_confdir)
 * [`service_name`](#-codavox--server--service_name)
@@ -807,6 +844,58 @@ Whether to set `static_catalogs`. It defaults to true in OpenVox Server, so
 this is usually already the case.
 
 Default value: `true`
+
+##### <a name="-codavox--server--manage_cache_flush_rule"></a>`manage_cache_flush_rule`
+
+Data type: `Boolean`
+
+Whether to write the `auth.conf` rule that lets the agent expire this
+server's environment cache. After every swap the agent sends
+`DELETE /puppet-admin-api/v1/environment-cache?environment=<env>` to the
+server on its own node, and the `auth.conf` OpenVox Server ships denies
+that path to everyone. Without the rule the server keeps compiling the
+tree it already parsed while `code-id` reports the new `code_id` — a
+catalog stamped with a version that does not describe it — and the agent
+reports every deploy as `sync failed` until the rule exists.
+
+Default value: `true`
+
+##### <a name="-codavox--server--cache_flush_allow"></a>`cache_flush_allow`
+
+Data type: `Optional[Variant[Array[Variant[String[1], Hash], 1], Hash]]`
+
+Who the rule admits, in `auth.conf`'s own `allow` syntax. Left unset, it
+admits this node by certname, because this node's agent is the only caller
+the rule is for. To share one rule across the fleet instead, admit the
+`pp_role` compilers carry — by OID, not by name, because a compiler runs
+with its CA service disabled and the admin API then resolves no short
+names:
+
+```puppet
+cache_flush_allow => { 'extensions' => { '1.3.6.1.4.1.34380.1.1.13' => 'openvox_compiler' } }
+```
+
+Default value: `undef`
+
+##### <a name="-codavox--server--auth_conf"></a>`auth_conf`
+
+Data type: `Stdlib::Absolutepath`
+
+Path to OpenVox Server's `auth.conf`.
+
+Default value: `'/etc/puppetlabs/puppetserver/conf.d/auth.conf'`
+
+##### <a name="-codavox--server--environment_timeout"></a>`environment_timeout`
+
+Data type: `Optional[String[1]]`
+
+Sets `environment_timeout` in `puppet.conf`'s `[server]` section. Left
+unset, the setting is not managed. A production compiler wants `unlimited`
+so it does not re-parse every environment on every catalog; the cache flush
+above is what makes that safe, since it is otherwise only the timeout that
+ever makes a deploy visible to the server.
+
+Default value: `undef`
 
 ##### <a name="-codavox--server--puppet_config"></a>`puppet_config`
 

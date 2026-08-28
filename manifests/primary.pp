@@ -55,6 +55,13 @@
 # something to serve, points OpenVox Server at it. Nothing needs sequencing by
 # hand, and the node cannot lock itself out.
 #
+# One consequence to expect: until that later run, the agent's cache flush
+# fails. It asks this node's OpenVox Server to expire each environment it
+# swaps, and the `auth.conf` rule allowing that arrives with the server wiring,
+# so the first run's journal shows `environment cache flush failed ... 403` and
+# `sync failed` from the agent. That clears on its own once the wiring lands;
+# the code itself is deployed and reported throughout.
+#
 # The wiring only ever moves forward. If the environment later disappears, this
 # class stops managing the server settings rather than removing them — reverting
 # would restart puppetserver to reach a state that cannot compile static catalogs

@@ -2,7 +2,8 @@
 #
 # Include this on each compiler, alongside `codavox::agent`. It writes
 # `versioned-code.conf` naming codavox's two commands, turns static catalogs on,
-# and points `environmentpath` at the directory codavox fills with symlinks.
+# points `environmentpath` at the directory codavox fills with symlinks, and
+# lets the agent expire this server's environment cache after every deploy.
 #
 # This is what replaces a hand-rolled pair of shell scripts. The difference is
 # not tidiness. A script that answers `code_id` from a timestamp when it cannot
@@ -47,6 +48,38 @@
 #   Whether to set `static_catalogs`. It defaults to true in OpenVox Server, so
 #   this is usually already the case.
 #
+# @param manage_cache_flush_rule
+#   Whether to write the `auth.conf` rule that lets the agent expire this
+#   server's environment cache. After every swap the agent sends
+#   `DELETE /puppet-admin-api/v1/environment-cache?environment=<env>` to the
+#   server on its own node, and the `auth.conf` OpenVox Server ships denies
+#   that path to everyone. Without the rule the server keeps compiling the
+#   tree it already parsed while `code-id` reports the new `code_id` — a
+#   catalog stamped with a version that does not describe it — and the agent
+#   reports every deploy as `sync failed` until the rule exists.
+#
+# @param cache_flush_allow
+#   Who the rule admits, in `auth.conf`'s own `allow` syntax. Left unset, it
+#   admits this node by certname, because this node's agent is the only caller
+#   the rule is for. To share one rule across the fleet instead, admit the
+#   `pp_role` compilers carry — by OID, not by name, because a compiler runs
+#   with its CA service disabled and the admin API then resolves no short
+#   names:
+#
+#   ```puppet
+#   cache_flush_allow => { 'extensions' => { '1.3.6.1.4.1.34380.1.1.13' => 'openvox_compiler' } }
+#   ```
+#
+# @param auth_conf
+#   Path to OpenVox Server's `auth.conf`.
+#
+# @param environment_timeout
+#   Sets `environment_timeout` in `puppet.conf`'s `[server]` section. Left
+#   unset, the setting is not managed. A production compiler wants `unlimited`
+#   so it does not re-parse every environment on every catalog; the cache flush
+#   above is what makes that safe, since it is otherwise only the timeout that
+#   ever makes a deploy visible to the server.
+#
 # @param puppet_config
 #   Path to puppet.conf.
 #
@@ -80,8 +113,12 @@ class codavox::server (
   Stdlib::Absolutepath $code_content_command = '/usr/bin/codavox-code-content',
   Boolean $manage_environmentpath = true,
   Boolean $manage_static_catalogs = true,
+  Boolean $manage_cache_flush_rule = true,
+  Optional[Variant[Array[Variant[String[1], Hash], 1], Hash]] $cache_flush_allow = undef,
   Stdlib::Absolutepath $puppet_config = '/etc/puppetlabs/puppet/puppet.conf',
   Stdlib::Absolutepath $puppetserver_confdir = '/etc/puppetlabs/puppetserver/conf.d',
+  Stdlib::Absolutepath $auth_conf = '/etc/puppetlabs/puppetserver/conf.d/auth.conf',
+  Optional[String[1]] $environment_timeout = undef,
   String[1] $service_name = 'puppetserver',
   Boolean $service_manage = true,
 ) {
@@ -144,6 +181,36 @@ class codavox::server (
     }
   }
 
+  if $environment_timeout {
+    ini_setting { 'codavox environment_timeout':
+      ensure  => $setting_ensure,
+      path    => $puppet_config,
+      section => 'server',
+      setting => 'environment_timeout',
+      value   => $environment_timeout,
+    }
+  }
+
+  if $manage_cache_flush_rule {
+    # This node's own certname unless told otherwise: the agent presents this
+    # node's certificate, and nothing else ever calls the endpoint. The name is
+    # fixed so the rule can be found and removed again.
+    $allow = $cache_flush_allow ? {
+      undef   => [$trusted['certname']],
+      default => $cache_flush_allow,
+    }
+
+    puppet_authorization::rule { 'codavox environment cache flush':
+      ensure               => $setting_ensure,
+      path                 => $auth_conf,
+      match_request_path   => '/puppet-admin-api/v1/environment-cache',
+      match_request_type   => 'path',
+      match_request_method => 'delete',
+      allow                => $allow,
+      sort_order           => 200,
+    }
+  }
+
   # Restart the server when the wiring changes, or it goes on serving from the
   # configuration it read at startup.
   #
@@ -158,6 +225,13 @@ class codavox::server (
   }
   if $manage_environmentpath {
     Ini_setting['codavox environmentpath'] ~> Service<| title == $service_name |>
+  }
+  if $environment_timeout {
+    Ini_setting['codavox environment_timeout'] ~> Service<| title == $service_name |>
+  }
+  if $manage_cache_flush_rule {
+    # auth.conf is read at startup, so the rule needs the same restart.
+    Puppet_authorization::Rule['codavox environment cache flush'] ~> Service<| title == $service_name |>
   }
 
   # Narrow the first-run window described above: if this node also runs the
