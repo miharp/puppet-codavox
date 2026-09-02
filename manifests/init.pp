@@ -120,8 +120,11 @@
 #
 # @param agent_prune_environments
 #   Whether to remove environments the publisher no longer serves. Off by
-#   default because deletion is destructive; needs r10k's `purge_levels` set to
-#   match.
+#   default because deletion is destructive. The primary-side half needs no
+#   setting: r10k's default `purge_levels` already removes an environment whose
+#   branch is gone, at the end of every deploy. If you override `purge_levels`
+#   in r10k.yaml, keep `deployment` in it, or removed environments stay
+#   published and there is nothing here to prune.
 #
 # @param agent_puppetserver
 #   The OpenVox Server on this node whose environment cache the agent expires
