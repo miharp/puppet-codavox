@@ -19,13 +19,17 @@ describe 'codavox' do
 
       context 'with default parameters' do
         it { is_expected.to compile.with_all_deps }
+
         it { is_expected.to contain_class('codavox::install') }
+
         it { is_expected.to contain_class('codavox::config') }
 
         # Installing must never start a daemon: which role a node plays is the
         # role's decision, so installing the package changes no behaviour.
         it { is_expected.not_to contain_service('codavox-agent') }
+
         it { is_expected.not_to contain_service('codavox-publish') }
+
         it { is_expected.not_to contain_service('codavox-deploy-server') }
 
         it { is_expected.to contain_package('codavox').with_ensure('installed') }
@@ -43,15 +47,20 @@ describe 'codavox' do
               .with_gpgkey('file:///etc/pki/rpm-gpg/RPM-GPG-KEY-harpworks')
               .that_requires('File[/etc/pki/rpm-gpg/RPM-GPG-KEY-harpworks]')
           }
+
           it { is_expected.to contain_file('/etc/pki/rpm-gpg/RPM-GPG-KEY-harpworks').with_source('puppet:///modules/codavox/harpworks.asc') }
+
           it { is_expected.not_to contain_file('/etc/apt/sources.list.d/harpworks.list') }
         else
           it {
             is_expected.to contain_file('/etc/apt/sources.list.d/harpworks.list')
               .with_content("deb [signed-by=/etc/apt/keyrings/harpworks.asc] https://packages.harpworks.org/deb stable main\n")
           }
+
           it { is_expected.to contain_file('/etc/apt/keyrings/harpworks.asc').with_source('puppet:///modules/codavox/harpworks.asc') }
+
           it { is_expected.to contain_exec('harpworks apt-get update').with_refreshonly(true).that_subscribes_to('File[/etc/apt/sources.list.d/harpworks.list]') }
+
           it { is_expected.not_to contain_yumrepo('harpworks') }
         end
 
@@ -85,7 +94,9 @@ describe 'codavox' do
         let(:params) { { repo_manage: false } }
 
         it { is_expected.to compile.with_all_deps }
+
         it { is_expected.not_to contain_class('codavox::repo') }
+
         it { is_expected.to contain_package('codavox').with_ensure('installed') }
       end
 
@@ -143,6 +154,7 @@ describe 'codavox' do
           it { is_expected.to compile.and_raise_error(%r{dpkg provider cannot pin a version}) }
         else
           it { is_expected.to compile.with_all_deps }
+
           it { is_expected.to contain_package('codavox').with_ensure('0.2.1') }
         end
       end
@@ -151,7 +163,9 @@ describe 'codavox' do
         let(:params) { { package_manage: false } }
 
         it { is_expected.to compile.with_all_deps }
+
         it { is_expected.not_to contain_package('codavox') }
+
         it { is_expected.to contain_file('/etc/codavox/config.yaml') }
       end
 
@@ -159,6 +173,7 @@ describe 'codavox' do
         let(:params) { { config_manage: false } }
 
         it { is_expected.to compile.with_all_deps }
+
         it { is_expected.not_to contain_file('/etc/codavox/config.yaml') }
       end
 
