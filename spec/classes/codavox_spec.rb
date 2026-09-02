@@ -104,6 +104,7 @@ describe 'codavox' do
         let(:params) { { repo_baseurl: 'https://mirror.example.com/harpworks' } }
 
         it { is_expected.to compile.with_all_deps }
+
         if os_facts[:os]['family'] == 'RedHat'
           it { is_expected.to contain_yumrepo('harpworks').with_baseurl('https://mirror.example.com/harpworks/rpm') }
         else
