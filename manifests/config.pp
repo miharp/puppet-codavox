@@ -22,6 +22,7 @@ class codavox::config {
       'environmentpath' => $codavox::environmentpath,
       'r10k'            => $codavox::r10k,
       'r10k_config'     => $codavox::r10k_config,
+      'r10k_timeout'    => $codavox::r10k_timeout,
     }
 
     $publish = {
@@ -36,6 +37,7 @@ class codavox::config {
       'interval'                => $codavox::agent_interval,
       'keep'                    => $codavox::agent_keep,
       'min_age'                 => $codavox::agent_min_age,
+      'max_unpacked'            => $codavox::agent_max_unpacked,
       'prune_environments'      => $codavox::agent_prune_environments,
       'puppetserver'            => $codavox::agent_puppetserver,
       'flush_environment_cache' => $codavox::agent_flush_environment_cache,
