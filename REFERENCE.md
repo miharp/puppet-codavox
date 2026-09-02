@@ -75,6 +75,7 @@ The following parameters are available in the `codavox` class:
 * [`certname`](#-codavox--certname)
 * [`r10k`](#-codavox--r10k)
 * [`r10k_config`](#-codavox--r10k_config)
+* [`r10k_timeout`](#-codavox--r10k_timeout)
 * [`publish_listen`](#-codavox--publish_listen)
 * [`publish_allow_roles`](#-codavox--publish_allow_roles)
 * [`publish_allow_certnames`](#-codavox--publish_allow_certnames)
@@ -83,6 +84,7 @@ The following parameters are available in the `codavox` class:
 * [`agent_interval`](#-codavox--agent_interval)
 * [`agent_keep`](#-codavox--agent_keep)
 * [`agent_min_age`](#-codavox--agent_min_age)
+* [`agent_max_unpacked`](#-codavox--agent_max_unpacked)
 * [`agent_prune_environments`](#-codavox--agent_prune_environments)
 * [`agent_puppetserver`](#-codavox--agent_puppetserver)
 * [`agent_flush_environment_cache`](#-codavox--agent_flush_environment_cache)
@@ -218,6 +220,19 @@ Path to r10k.yaml, for `codavox::deploy_server`.
 
 Default value: `undef`
 
+##### <a name="-codavox--r10k_timeout"></a>`r10k_timeout`
+
+Data type: `Optional[String[1]]`
+
+Bound on one r10k run, as a Go duration such as `10m`, for
+`codavox::deploy_server` and `codavox deploy`. Past it, r10k and everything
+it spawned are terminated and the deploy fails, so a fetch from an
+unreachable remote cannot hold the deploy lock forever. Left unset, codavox
+defaults to ten minutes; raise it if a large first deploy over a slow link
+legitimately needs more.
+
+Default value: `undef`
+
 ##### <a name="-codavox--publish_listen"></a>`publish_listen`
 
 Data type: `Optional[String[1]]`
@@ -300,6 +315,19 @@ Data type: `Optional[String[1]]`
 How long a superseded version is retained regardless of `agent_keep`. This
 is the guard that matters: an agent run holding a catalog stamped with an
 older `code_id` still requests file content for it.
+
+Default value: `undef`
+
+##### <a name="-codavox--agent_max_unpacked"></a>`agent_max_unpacked`
+
+Data type: `Optional[String[1]]`
+
+Most one artifact may expand to on disk, as a size with an optional K, M,
+or G suffix such as `2G`. An artifact past it is refused before it lands,
+so a wrong or compromised publisher cannot fill every compiler's disk with
+one small file. Left unset, codavox defaults to 2 GiB, far above any Puppet
+code tree; raise it only for an environment that really carries that much.
+It cannot be turned off.
 
 Default value: `undef`
 

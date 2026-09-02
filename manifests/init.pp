@@ -73,6 +73,14 @@
 # @param r10k_config
 #   Path to r10k.yaml, for `codavox::deploy_server`.
 #
+# @param r10k_timeout
+#   Bound on one r10k run, as a Go duration such as `10m`, for
+#   `codavox::deploy_server` and `codavox deploy`. Past it, r10k and everything
+#   it spawned are terminated and the deploy fails, so a fetch from an
+#   unreachable remote cannot hold the deploy lock forever. Left unset, codavox
+#   defaults to ten minutes; raise it if a large first deploy over a slow link
+#   legitimately needs more.
+#
 # @param publish_listen
 #   Address the publisher listens on.
 #
@@ -117,6 +125,14 @@
 #   How long a superseded version is retained regardless of `agent_keep`. This
 #   is the guard that matters: an agent run holding a catalog stamped with an
 #   older `code_id` still requests file content for it.
+#
+# @param agent_max_unpacked
+#   Most one artifact may expand to on disk, as a size with an optional K, M,
+#   or G suffix such as `2G`. An artifact past it is refused before it lands,
+#   so a wrong or compromised publisher cannot fill every compiler's disk with
+#   one small file. Left unset, codavox defaults to 2 GiB, far above any Puppet
+#   code tree; raise it only for an environment that really carries that much.
+#   It cannot be turned off.
 #
 # @param agent_prune_environments
 #   Whether to remove environments the publisher no longer serves. Off by
@@ -181,6 +197,7 @@ class codavox (
   Optional[Stdlib::Host] $certname = undef,
   Optional[Stdlib::Absolutepath] $r10k = undef,
   Optional[Stdlib::Absolutepath] $r10k_config = undef,
+  Optional[String[1]] $r10k_timeout = undef,
   Optional[String[1]] $publish_listen = undef,
   Optional[Array[String[1], 1]] $publish_allow_roles = undef,
   Optional[Array[Stdlib::Host, 1]] $publish_allow_certnames = undef,
@@ -189,6 +206,7 @@ class codavox (
   Optional[String[1]] $agent_interval = undef,
   Optional[Integer[1]] $agent_keep = undef,
   Optional[String[1]] $agent_min_age = undef,
+  Optional[String[1]] $agent_max_unpacked = undef,
   Optional[Boolean] $agent_prune_environments = undef,
   Optional[Stdlib::HTTPUrl] $agent_puppetserver = undef,
   Optional[Boolean] $agent_flush_environment_cache = undef,
