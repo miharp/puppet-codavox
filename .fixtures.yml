@@ -22,3 +22,7 @@ fixtures:
     hocon:
       repo: puppetlabs/hocon
       ref: 2.0.0
+    # yumrepo left Puppet core; openvox-agent bundles it, the test gem does not.
+    yumrepo_core:
+      repo: puppetlabs/yumrepo_core
+      ref: 2.1.0
