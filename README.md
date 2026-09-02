@@ -41,15 +41,22 @@ This module installs it, configures it, and points OpenVox Server at it.
 
 ## Setup
 
-codavox publishes rpm and deb packages to GitHub Releases and runs no package
-repository, so the usual case is to install from a release URL:
+Including `codavox` configures the
+[harpworks package repository](https://packages.harpworks.org), installs the
+package from it, and writes `/etc/codavox/config.yaml`. Nothing needs setting
+for that; pin a version with `codavox::package_ensure: '0.8.0'`, or let
+`latest` follow releases. The repository's signing key ships in this module,
+so the trust anchor is reviewed like any other change and the first apply needs
+no network beyond the package manager's own.
+
+A host that cannot reach the repository can install from a release file or URL
+instead, which also leaves the repository unconfigured:
 
 ```yaml
-codavox::package_source: 'https://github.com/miharp/codavox/releases/download/v0.6.2/codavox_0.6.2_linux_amd64.rpm'
+codavox::package_source: 'https://github.com/miharp/codavox/releases/download/v0.8.0/codavox_0.8.0_linux_amd64.rpm'
 ```
 
-Including `codavox` on its own installs the package and writes
-`/etc/codavox/config.yaml`. It **starts nothing**: which daemon a node runs is
+The class It **starts nothing**: which daemon a node runs is
 the node's role, not a consequence of installing software. Add one or more role
 classes to make something happen.
 
@@ -228,10 +235,11 @@ Composing the classes yourself on such a node still means two passes: apply with
 `manage_environmentpath => false`, confirm `codavox code-id production` answers,
 then remove the override.
 
-**Version pinning with `package_source` is rpm-only.** The `dpkg` provider has no
-versionable feature, so on Debian and Ubuntu `package_ensure` must be `installed`,
-`present`, `absent`, or `purged` when installing from a file. The module fails with
-an explanation rather than quietly ignoring a pin.
+**Version pinning with `package_source` is rpm-only.** From the repository a
+pin works everywhere, but the `dpkg` provider has no versionable feature, so on
+Debian and Ubuntu `package_ensure` must be `installed`, `present`, `absent`, or
+`purged` when installing from a file. The module fails with an explanation
+rather than quietly ignoring a pin.
 
 **The API token and webhook secret are optional to manage.** Give
 `deploy_server_api_token` or `deploy_server_secret` to have the module write them

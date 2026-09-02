@@ -22,7 +22,8 @@
 #   The package to install.
 #
 # @param package_ensure
-#   A version to pin, or `installed`, `latest`, or `absent`.
+#   A version to pin, such as `'0.8.0'`, or `installed`, `latest`, or `absent`.
+#   From the repository a pin works on every supported OS.
 #
 # @param config_file
 #   Path to the configuration file the daemons read.
@@ -33,11 +34,19 @@
 #   a fresh OpenVox Server ships a populated directory there, and `rename(2)`
 #   cannot replace a real directory with a symlink.
 #
+# @param repo_manage
+#   Whether to configure the harpworks package repository, which serves codavox
+#   and every other tool published under that name. On by default; the
+#   repository is where releases live. Ignored when `package_source` is set.
+#
+# @param repo_baseurl
+#   Where the repository is served from. Change it only for a mirror.
+#
 # @param package_source
-#   Install from this file or URL instead of from a repository. codavox publishes
-#   to GitHub Releases and runs no package repository, so this is the ordinary
-#   case rather than the exception. A direct package install resolves no
-#   dependencies; codavox is a static binary and has none.
+#   Install from this file or URL instead of from the repository, for a host
+#   that cannot reach it. The repository is then not configured. A direct
+#   package install resolves no dependencies and cannot be upgraded by the
+#   package manager; codavox is a static binary, so the first is harmless.
 #
 # @param package_provider
 #   Provider to use when `package_source` is set. Defaults per OS family from
@@ -179,7 +188,7 @@
 #   include codavox
 #
 # @example A primary that publishes, driven from Hiera
-#   codavox::package_source: 'https://github.com/miharp/codavox/releases/download/v0.6.2/codavox_0.6.2_linux_amd64.rpm'
+#   codavox::package_ensure: '0.8.0'
 #   codavox::basedir: '/etc/puppetlabs/code/environments'
 #
 class codavox (
@@ -187,6 +196,8 @@ class codavox (
   String[1] $package_ensure,
   Stdlib::Absolutepath $config_file,
   Stdlib::Absolutepath $environmentpath,
+  Boolean $repo_manage = true,
+  Stdlib::HTTPUrl $repo_baseurl = 'https://packages.harpworks.org',
   Optional[String[1]] $package_source = undef,
   Optional[String[1]] $package_provider = undef,
   Boolean $package_manage = true,
@@ -217,6 +228,10 @@ class codavox (
   Optional[Sensitive[String[1]]] $deploy_server_secret = undef,
   Optional[Integer[1]] $deploy_server_history = undef,
 ) {
+  if $package_manage and $repo_manage and !$package_source {
+    contain codavox::repo
+    Class['codavox::repo'] -> Class['codavox::install']
+  }
   contain codavox::install
   contain codavox::config
 

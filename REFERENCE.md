@@ -19,6 +19,7 @@
 
 * `codavox::config`: Writes codavox's configuration file. Private.
 * `codavox::install`: Installs the codavox package. Private.
+* `codavox::repo`: Configures the harpworks package repository. Private.
 
 ## Classes
 
@@ -53,7 +54,7 @@ include codavox
 ##### A primary that publishes, driven from Hiera
 
 ```puppet
-codavox::package_source: 'https://github.com/miharp/codavox/releases/download/v0.6.2/codavox_0.6.2_linux_amd64.rpm'
+codavox::package_ensure: '0.8.0'
 codavox::basedir: '/etc/puppetlabs/code/environments'
 ```
 
@@ -65,6 +66,8 @@ The following parameters are available in the `codavox` class:
 * [`package_ensure`](#-codavox--package_ensure)
 * [`config_file`](#-codavox--config_file)
 * [`environmentpath`](#-codavox--environmentpath)
+* [`repo_manage`](#-codavox--repo_manage)
+* [`repo_baseurl`](#-codavox--repo_baseurl)
 * [`package_source`](#-codavox--package_source)
 * [`package_provider`](#-codavox--package_provider)
 * [`package_manage`](#-codavox--package_manage)
@@ -107,7 +110,8 @@ Default value: `'codavox'`
 
 Data type: `String[1]`
 
-A version to pin, or `installed`, `latest`, or `absent`.
+A version to pin, such as `'0.8.0'`, or `installed`, `latest`, or `absent`.
+From the repository a pin works on every supported OS.
 
 Default value: `'installed'`
 
@@ -130,14 +134,32 @@ cannot replace a real directory with a symlink.
 
 Default value: `'/opt/puppetlabs/codavox/environments'`
 
+##### <a name="-codavox--repo_manage"></a>`repo_manage`
+
+Data type: `Boolean`
+
+Whether to configure the harpworks package repository, which serves codavox
+and every other tool published under that name. On by default; the
+repository is where releases live. Ignored when `package_source` is set.
+
+Default value: `true`
+
+##### <a name="-codavox--repo_baseurl"></a>`repo_baseurl`
+
+Data type: `Stdlib::HTTPUrl`
+
+Where the repository is served from. Change it only for a mirror.
+
+Default value: `'https://packages.harpworks.org'`
+
 ##### <a name="-codavox--package_source"></a>`package_source`
 
 Data type: `Optional[String[1]]`
 
-Install from this file or URL instead of from a repository. codavox publishes
-to GitHub Releases and runs no package repository, so this is the ordinary
-case rather than the exception. A direct package install resolves no
-dependencies; codavox is a static binary and has none.
+Install from this file or URL instead of from the repository, for a host
+that cannot reach it. The repository is then not configured. A direct
+package install resolves no dependencies and cannot be upgraded by the
+package manager; codavox is a static binary, so the first is harmless.
 
 Default value: `undef`
 

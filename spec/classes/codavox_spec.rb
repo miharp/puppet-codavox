@@ -30,6 +30,31 @@ describe 'codavox' do
 
         it { is_expected.to contain_package('codavox').with_ensure('installed') }
 
+        # The repository is the default, and it is configured before the
+        # package so the first apply installs from it.
+        it { is_expected.to contain_class('codavox::repo').that_comes_before('Class[codavox::install]') }
+
+        if os_facts[:os]['family'] == 'RedHat'
+          it {
+            is_expected.to contain_yumrepo('harpworks')
+              .with_baseurl('https://packages.harpworks.org/rpm')
+              .with_gpgcheck('0')
+              .with_repo_gpgcheck('1')
+              .with_gpgkey('file:///etc/pki/rpm-gpg/RPM-GPG-KEY-harpworks')
+              .that_requires('File[/etc/pki/rpm-gpg/RPM-GPG-KEY-harpworks]')
+          }
+          it { is_expected.to contain_file('/etc/pki/rpm-gpg/RPM-GPG-KEY-harpworks').with_source('puppet:///modules/codavox/harpworks.asc') }
+          it { is_expected.not_to contain_file('/etc/apt/sources.list.d/harpworks.list') }
+        else
+          it {
+            is_expected.to contain_file('/etc/apt/sources.list.d/harpworks.list')
+              .with_content("deb [signed-by=/etc/apt/keyrings/harpworks.asc] https://packages.harpworks.org/deb stable main\n")
+          }
+          it { is_expected.to contain_file('/etc/apt/keyrings/harpworks.asc').with_source('puppet:///modules/codavox/harpworks.asc') }
+          it { is_expected.to contain_exec('harpworks apt-get update').with_refreshonly(true).that_subscribes_to('File[/etc/apt/sources.list.d/harpworks.list]') }
+          it { is_expected.not_to contain_yumrepo('harpworks') }
+        end
+
         it {
           is_expected.to contain_file('/etc/codavox/config.yaml')
             .with_ensure('file')
@@ -56,6 +81,25 @@ describe 'codavox' do
       # and a let only resolves once an example is already running.
       debian = os_facts[:os]['family'] == 'Debian'
 
+      context 'with repo_manage false' do
+        let(:params) { { repo_manage: false } }
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.not_to contain_class('codavox::repo') }
+        it { is_expected.to contain_package('codavox').with_ensure('installed') }
+      end
+
+      context 'with a mirror' do
+        let(:params) { { repo_baseurl: 'https://mirror.example.com/harpworks' } }
+
+        it { is_expected.to compile.with_all_deps }
+        if os_facts[:os]['family'] == 'RedHat'
+          it { is_expected.to contain_yumrepo('harpworks').with_baseurl('https://mirror.example.com/harpworks/rpm') }
+        else
+          it { is_expected.to contain_file('/etc/apt/sources.list.d/harpworks.list').with_content(%r{https://mirror\.example\.com/harpworks/deb}) }
+        end
+      end
+
       context 'with a package source, unversioned' do
         # The provider comes from module data per OS family, because the
         # dependency-resolving providers cannot install from a bare file. Read
@@ -70,6 +114,10 @@ describe 'codavox' do
         end
 
         it { is_expected.to compile.with_all_deps }
+
+        # A host installing from a file is one that cannot reach the
+        # repository, so it must not be told to.
+        it { is_expected.not_to contain_class('codavox::repo') }
 
         it {
           is_expected.to contain_package('codavox')
