@@ -13,7 +13,10 @@ rescue LoadError
 end
 
 begin
-  require 'puppet_blacksmith/rake_tasks'
+  require 'voxpupuli/release/rake_tasks'
 rescue LoadError
-  # Allowed to fail, only needed in release
+  # voxpupuli-release is only available in the release gem group
+else
+  GCGConfig.user = 'miharp'
+  GCGConfig.project = 'puppet-codavox'
 end

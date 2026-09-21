@@ -1,5 +1,12 @@
 # codavox
 
+[![CI](https://github.com/miharp/puppet-codavox/actions/workflows/ci.yml/badge.svg)](https://github.com/miharp/puppet-codavox/actions/workflows/ci.yml)
+[![OpenVox compatible](https://img.shields.io/badge/OpenVox-%3E%3D%208.0-orange.svg)](https://voxpupuli.org/openvox/)
+[![License](https://img.shields.io/github/license/miharp/puppet-codavox)](https://github.com/miharp/puppet-codavox/blob/main/LICENSE)
+
+[![Puppet Forge](https://img.shields.io/puppetforge/v/miharp/codavox)](https://forge.puppet.com/modules/miharp/codavox)
+[![Puppet Forge downloads](https://img.shields.io/puppetforge/dt/miharp/codavox)](https://forge.puppet.com/modules/miharp/codavox)
+
 Manages [codavox](https://github.com/miharp/codavox), which distributes
 versioned Puppet code to OpenVox compilers.
 
@@ -15,6 +22,7 @@ versioned Puppet code to OpenVox compilers.
   - [Replacing a hand-rolled static catalog setup](#replacing-a-hand-rolled-static-catalog-setup)
 - [Reference](#reference)
 - [Limitations](#limitations)
+- [Releasing](#releasing)
 - [Development](#development)
 
 ## What codavox does, and why it needs a module
@@ -41,6 +49,19 @@ This module installs it, configures it, and points OpenVox Server at it.
 
 ## Setup
 
+Install from the Forge, which resolves the module's dependencies:
+
+```console
+puppet module install miharp-codavox
+```
+
+or pin it in a `Puppetfile`, alongside the modules `metadata.json` lists as
+dependencies:
+
+```ruby
+mod 'miharp-codavox', '0.6.1'
+```
+
 Including `codavox` configures the
 [harpworks package repository](https://packages.harpworks.org), installs the
 package from it, and writes `/etc/codavox/config.yaml`. Nothing needs setting
@@ -56,7 +77,7 @@ instead, which also leaves the repository unconfigured:
 codavox::package_source: 'https://github.com/miharp/codavox/releases/download/v0.8.0/codavox_0.8.0_linux_amd64.rpm'
 ```
 
-The class It **starts nothing**: which daemon a node runs is
+The class **starts nothing**: which daemon a node runs is
 the node's role, not a consequence of installing software. Add one or more role
 classes to make something happen.
 
@@ -214,7 +235,7 @@ settings again, returning the server to whatever it used before.
 
 ## Reference
 
-See [REFERENCE.md](REFERENCE.md), generated from the inline documentation.
+See [REFERENCE.md](https://github.com/miharp/puppet-codavox/blob/main/REFERENCE.md), generated from the inline documentation.
 
 ## Limitations
 
@@ -252,21 +273,20 @@ deployed code — is exercised in
 [codavox's own integration harness](https://github.com/miharp/codavox/tree/main/test/integration)
 rather than here.
 
-**Not published to the Forge.** There is deliberately no release workflow: it
-would fire on any `v*.*.*` tag and try to publish, which is not wanted yet.
-Consume it from git meanwhile, pinning a commit so a deploy is reproducible:
+## Releasing
 
-```ruby
-mod 'codavox',
-  git: 'https://github.com/miharp/puppet-codavox',
-  ref: '<commit sha>'
-```
+The module is published to the Forge as
+[`miharp-codavox`](https://forge.puppet.com/modules/miharp/codavox). Set the new
+version in `metadata.json` in a pull request, then tag the merge commit
+`vX.Y.Z` and push the tag. The `Release` workflow refuses a tag that disagrees
+with `metadata.json`, then calls Vox Pupuli's shared
+[release workflow](https://github.com/voxpupuli/gha-puppet/blob/v4/.github/workflows/release.yml),
+which uploads the module and creates the GitHub release with the tarball
+attached. It needs `PUPPET_FORGE_USERNAME` and `PUPPET_FORGE_API_KEY` in
+repository secrets.
 
-Publishing later needs a `release.yml` calling
-`voxpupuli/gha-puppet/.github/workflows/release.yml`, plus
-`PUPPET_FORGE_USERNAME` and `PUPPET_FORGE_API_KEY` in repository secrets. The
-module name would move from `miharp-codavox` to whichever namespace it is
-published under.
+A version the Forge has accepted cannot be uploaded again, even after deleting
+it, so a bad release is fixed with the next patch version.
 
 ## Development
 
