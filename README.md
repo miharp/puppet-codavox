@@ -59,7 +59,7 @@ or pin it in a `Puppetfile`, alongside the modules `metadata.json` lists as
 dependencies:
 
 ```ruby
-mod 'miharp-codavox', '0.6.1'
+mod 'miharp-codavox', '0.6.2'
 ```
 
 Including `codavox` configures the
@@ -238,6 +238,12 @@ settings again, returning the server to whatever it used before.
 See [REFERENCE.md](https://github.com/miharp/puppet-codavox/blob/main/REFERENCE.md), generated from the inline documentation.
 
 ## Limitations
+
+**OpenVox only.** The module is for open-source OpenVox Server. It is not for
+Puppet Enterprise, which has Code Manager and file sync for the same job, and it
+has not been written for or tested on PE. `metadata.json` declares an `openvox`
+requirement rather than a `puppet` one for that reason: the Forge turns a
+`puppet` requirement into a list of compatible PE versions.
 
 **The first cutover on a self-managing primary needs care.** Pointing
 `environmentpath` at a directory the agent has not filled yet leaves OpenVox
