@@ -1,11 +1,11 @@
 {
   "name": "miharp-codavox",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "author": "Michael Harp",
   "summary": "Distributes versioned Puppet code to OpenVox compilers via codavox",
   "license": "Apache-2.0",
   "source": "https://github.com/miharp/puppet-codavox",
-  "project_page": "https://github.com/miharp/codavox",
+  "project_page": "https://github.com/miharp/puppet-codavox",
   "issues_url": "https://github.com/miharp/puppet-codavox/issues",
   "dependencies": [
     {

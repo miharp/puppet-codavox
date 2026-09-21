@@ -59,7 +59,7 @@ or pin it in a `Puppetfile`, alongside the modules `metadata.json` lists as
 dependencies:
 
 ```ruby
-mod 'miharp-codavox', '0.6.2'
+mod 'miharp-codavox', '0.6.3'
 ```
 
 Including `codavox` configures the
@@ -282,10 +282,11 @@ rather than here.
 ## Releasing
 
 The module is published to the Forge as
-[`miharp-codavox`](https://forge.puppet.com/modules/miharp/codavox). Set the new
-version in `metadata.json` in a pull request, then tag the merge commit
-`vX.Y.Z` and push the tag. The `Release` workflow refuses a tag that disagrees
-with `metadata.json`, then calls Vox Pupuli's shared
+[`miharp-codavox`](https://forge.puppet.com/modules/miharp/codavox). In a pull
+request, set the new version in `metadata.json` and add its section to
+`CHANGELOG.md`, then tag the merge commit `vX.Y.Z` and push the tag. The
+`Release` workflow refuses a tag that disagrees with `metadata.json`, then
+calls Vox Pupuli's shared
 [release workflow](https://github.com/voxpupuli/gha-puppet/blob/v4/.github/workflows/release.yml),
 which uploads the module and creates the GitHub release with the tarball
 attached. It needs `PUPPET_FORGE_USERNAME` and `PUPPET_FORGE_API_KEY` in
