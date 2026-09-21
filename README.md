@@ -59,7 +59,7 @@ or pin it in a `Puppetfile`, alongside the modules `metadata.json` lists as
 dependencies:
 
 ```ruby
-mod 'miharp-codavox', '0.6.2'
+mod 'miharp-codavox', '0.6.3'
 ```
 
 Including `codavox` configures the
