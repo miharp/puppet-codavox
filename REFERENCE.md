@@ -987,4 +987,3 @@ whenever the service is declared — here or elsewhere — and is skipped
 silently when nothing manages it at all.
 
 Default value: `true`
-
