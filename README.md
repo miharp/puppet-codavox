@@ -60,7 +60,7 @@ or pin it in a `Puppetfile`, alongside the modules `metadata.json` lists as
 dependencies:
 
 ```ruby
-mod 'miharp-codavox', '0.6.3'
+mod 'miharp-codavox', '0.7.0'
 ```
 
 Including `codavox` configures the
@@ -263,7 +263,7 @@ deploy. See
 [Running on demand](https://github.com/miharp/codavox/blob/main/docs/agent.md#running-on-demand)
 in codavox's documentation.
 
-**This needs codavox later than 0.11.0.** Up to 0.11.0, a cache flush that
+**This needs codavox 0.11.1 or later.** Up to 0.11.0, a cache flush that
 failed during `codavox agent --once` was forgotten by the next run, which then
 reported success while OpenVox Server compiled the old code.
 

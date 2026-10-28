@@ -10,6 +10,8 @@ Releases before 0.6.1 were git tags only; the module has been on the
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-28
+
 ### Added
 
 - `codavox::deploy` and `codavox::sync` tasks, for sites where OpenBolt or
@@ -17,7 +19,7 @@ Releases before 0.6.1 were git tags only; the module has been on the
   polling. `codavox::deploy` runs `codavox deploy --wait` on the primary;
   `codavox::sync` runs `codavox agent --once` on a compiler and fails unless it
   converged, cache flush included. The README's *Deploying on demand* covers
-  the setup. Trigger-only use needs codavox later than 0.11.0.
+  the setup. Trigger-only use needs codavox 0.11.1 or later.
 
 ## [0.6.3] - 2026-09-21
 
@@ -148,7 +150,8 @@ First release on the Puppet Forge.
 - `publish_allow_certnames`, to admit compilers by name while their
   certificates carry no `pp_role`.
 
-[Unreleased]: https://github.com/miharp/puppet-codavox/compare/v0.6.3...HEAD
+[Unreleased]: https://github.com/miharp/puppet-codavox/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/miharp/puppet-codavox/compare/v0.6.3...v0.7.0
 [0.6.3]: https://github.com/miharp/puppet-codavox/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/miharp/puppet-codavox/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/miharp/puppet-codavox/compare/v0.6.0...v0.6.1
