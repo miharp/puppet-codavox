@@ -19,6 +19,7 @@ versioned Puppet code to OpenVox compilers.
   - [A primary that only publishes](#a-primary-that-only-publishes)
   - [A compiler](#a-compiler)
   - [The environment cache](#the-environment-cache)
+  - [Deploying on demand](#deploying-on-demand)
   - [Replacing a hand-rolled static catalog setup](#replacing-a-hand-rolled-static-catalog-setup)
 - [Reference](#reference)
 - [Limitations](#limitations)
@@ -214,6 +215,57 @@ codavox::server::cache_flush_allow:
   extensions:
     '1.3.6.1.4.1.34380.1.1.13': openvox_compiler
 ```
+
+### Deploying on demand
+
+Some sites require that code on a compiler changes only when an orchestrator
+says so. Two tasks cover that, run by OpenBolt or Choria:
+
+- `codavox::deploy`, on the primary, runs `codavox deploy --wait`: r10k stages
+  the code, the publisher seals it, and the task returns once the publisher
+  serves the new `code_id`.
+- `codavox::sync`, on each compiler, runs `codavox agent --once`: it converges
+  every environment the publisher serves, and expires OpenVox Server's cache
+  for each one that moved.
+
+Stop the agent's own polling on the compilers. `codavox::config` still writes
+`/etc/codavox/config.yaml`, which both tasks read:
+
+```yaml
+codavox::agent::service_ensure: stopped
+codavox::agent::service_enable: false
+```
+
+Then deploy, and sync the compilers:
+
+```console
+bolt task run codavox::deploy environments='["production"]' \
+  --targets puppet.example.com --run-as root
+bolt task run codavox::sync --targets compilers --run-as root
+```
+
+`codavox::sync` fails unless the compiler is fully converged, cache flush
+included, and returns the agent's log either way. `codavox compilers` on the
+primary shows which `code_id` each compiler serves.
+
+A compiler set up this way serves no environment until its first sync:
+`codavox::server` points OpenVox Server at codavox's environment directory,
+and only the agent fills it. Run `codavox::sync` once after the Puppet run
+that installs codavox, before the compiler takes any agents.
+
+The network direction does not change. The compiler still connects to the
+publisher on port 8150; the orchestrator only decides when.
+
+This gives up the agent's self-healing: a compiler that misses a sync stays on
+its old code until the next one. Running the tasks with the service still
+polling is safe too, if all you want is for compilers to converge sooner after a
+deploy. See
+[Running on demand](https://github.com/miharp/codavox/blob/main/docs/agent.md#running-on-demand)
+in codavox's documentation.
+
+**This needs codavox later than 0.11.0.** Up to 0.11.0, a cache flush that
+failed during `codavox agent --once` was forgotten by the next run, which then
+reported success while OpenVox Server compiled the old code.
 
 ### Replacing a hand-rolled static catalog setup
 

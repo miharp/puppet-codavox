@@ -1,0 +1,19 @@
+{
+  "description": "Run `codavox deploy --wait` on the primary: r10k, seal, and return once the publisher serves the new code_id. Run as root.",
+  "input_method": "environment",
+  "parameters": {
+    "environments": {
+      "description": "The environments to deploy, as r10k names them.",
+      "type": "Optional[Array[Pattern[/\\A\\w+\\z/], 1]]"
+    },
+    "all": {
+      "description": "Deploy every environment r10k's sources define, instead of naming them.",
+      "type": "Optional[Boolean]"
+    },
+    "modules": {
+      "description": "Re-resolve only these Puppetfile modules, by short name (apache, not puppetlabs/apache), leaving the rest of each environment as it is.",
+      "type": "Optional[Array[Pattern[/\\A\\w+\\z/], 1]]"
+    }
+  },
+  "supports_noop": false
+}

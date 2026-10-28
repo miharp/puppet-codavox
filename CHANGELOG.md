@@ -10,6 +10,15 @@ Releases before 0.6.1 were git tags only; the module has been on the
 
 ## [Unreleased]
 
+### Added
+
+- `codavox::deploy` and `codavox::sync` tasks, for sites where OpenBolt or
+  Choria must trigger code changes on compilers rather than the agent's own
+  polling. `codavox::deploy` runs `codavox deploy --wait` on the primary;
+  `codavox::sync` runs `codavox agent --once` on a compiler and fails unless it
+  converged, cache flush included. The README's *Deploying on demand* covers
+  the setup. Trigger-only use needs codavox later than 0.11.0.
+
 ## [0.6.3] - 2026-09-21
 
 ### Added
