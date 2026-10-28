@@ -248,6 +248,11 @@ bolt task run codavox::sync --targets compilers --run-as root
 included, and returns the agent's log either way. `codavox compilers` on the
 primary shows which `code_id` each compiler serves.
 
+A compiler set up this way serves no environment until its first sync:
+`codavox::server` points OpenVox Server at codavox's environment directory,
+and only the agent fills it. Run `codavox::sync` once after the Puppet run
+that installs codavox, before the compiler takes any agents.
+
 The network direction does not change. The compiler still connects to the
 publisher on port 8150; the orchestrator only decides when.
 
