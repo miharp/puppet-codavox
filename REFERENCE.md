@@ -21,6 +21,11 @@
 * `codavox::install`: Installs the codavox package. Private.
 * `codavox::repo`: Configures the harpworks package repository. Private.
 
+### Tasks
+
+* [`deploy`](#deploy): Run `codavox deploy --wait` on the primary: r10k, seal, and return once the publisher serves the new code_id. Run as root.
+* [`sync`](#sync): Run `codavox agent --once` on a compiler; fails unless every environment converged and its cache flush landed. Run as root.
+
 ## Classes
 
 ### <a name="codavox"></a>`codavox`
@@ -987,3 +992,37 @@ whenever the service is declared — here or elsewhere — and is skipped
 silently when nothing manages it at all.
 
 Default value: `true`
+
+## Tasks
+
+### <a name="deploy"></a>`deploy`
+
+Run `codavox deploy --wait` on the primary: r10k, seal, and return once the publisher serves the new code_id. Run as root.
+
+**Supports noop?** false
+
+#### Parameters
+
+##### `environments`
+
+Data type: `Optional[Array[Pattern[/\A\w+\z/], 1]]`
+
+The environments to deploy, as r10k names them.
+
+##### `all`
+
+Data type: `Optional[Boolean]`
+
+Deploy every environment r10k's sources define, instead of naming them.
+
+##### `modules`
+
+Data type: `Optional[Array[Pattern[/\A\w+\z/], 1]]`
+
+Re-resolve only these Puppetfile modules, by short name (apache, not puppetlabs/apache), leaving the rest of each environment as it is.
+
+### <a name="sync"></a>`sync`
+
+Run `codavox agent --once` on a compiler; fails unless every environment converged and its cache flush landed. Run as root.
+
+**Supports noop?** false

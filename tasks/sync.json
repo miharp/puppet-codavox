@@ -1,0 +1,6 @@
+{
+  "description": "Run `codavox agent --once` on a compiler; fails unless every environment converged and its cache flush landed. Run as root.",
+  "input_method": "environment",
+  "parameters": {},
+  "supports_noop": false
+}
